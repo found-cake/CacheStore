@@ -93,6 +93,9 @@ func (s *CacheStore) Set(key string, value []byte, exp time.Duration) error {
 	if key == "" {
 		return errors.New("key cannot be empty")
 	}
+	if value == nil {
+		return errors.New("value cannot be null")
+	}
 
 	var expiry uint32
 	if exp > 0 {
