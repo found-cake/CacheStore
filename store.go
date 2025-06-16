@@ -1,0 +1,141 @@
+package cachestore
+
+import (
+	"errors"
+	"sync"
+	"time"
+)
+
+type entry struct {
+	data   []byte
+	expiry uint32
+}
+
+type CacheStore struct {
+	mux      sync.RWMutex
+	memorydb map[string]entry
+	done     chan bool
+	config   Config
+}
+
+func NewCacheStore(cfg Config) (*CacheStore, error) {
+	store := &CacheStore{
+		memorydb: make(map[string]entry),
+		done:     make(chan bool),
+		config:   cfg,
+	}
+	if cfg.DBSave {
+		if cfg.DBFileName == "" {
+			cfg.DBFileName = "cache.db"
+		}
+		db, err := initDB(cfg.DBFileName)
+		if err != nil {
+			return nil, err
+		}
+		defer db.Close()
+		if data, err := loadFromDB(db); err != nil {
+			return nil, err
+		} else {
+			store.memorydb = data
+		}
+	}
+
+	if cfg.GCInterval > 0 {
+		go store.gc()
+	}
+
+	return store, nil
+}
+
+func (s *CacheStore) gc() {
+	ticker := time.NewTicker(s.config.GCInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			s.cleanExpired()
+		case <-s.done:
+			return
+		}
+	}
+}
+
+func (s *CacheStore) cleanExpired() {
+	now := uint32(time.Now().Unix())
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
+	for key, entry := range s.memorydb {
+		if entry.expiry > 0 && entry.expiry <= now {
+			delete(s.memorydb, key)
+		}
+	}
+}
+
+func (s *CacheStore) Get(key string) ([]byte, error) {
+	if key == "" {
+		return nil, errors.New("key cannot be empty")
+	}
+	s.mux.RLock()
+	v, ok := s.memorydb[key]
+	s.mux.RUnlock()
+	if !ok {
+		return nil, nil
+	}
+	if v.expiry > 0 && v.expiry <= uint32(time.Now().Unix()) {
+		return nil, nil
+	}
+	return v.data, nil
+}
+
+func (s *CacheStore) Set(key string, value []byte, exp time.Duration) error {
+	if key == "" {
+		return errors.New("key cannot be empty")
+	}
+
+	var expiry uint32
+	if exp > 0 {
+		expiry = uint32(time.Now().Add(exp).Unix())
+	}
+
+	s.mux.Lock()
+	s.memorydb[key] = entry{
+		data:   value,
+		expiry: expiry,
+	}
+	s.mux.Unlock()
+
+	return nil
+}
+
+func (s *CacheStore) Delete(key string) error {
+	if key == "" {
+		return errors.New("key cannot be empty")
+	}
+
+	s.mux.Lock()
+	delete(s.memorydb, key)
+	s.mux.Unlock()
+
+	return nil
+}
+
+func (s *CacheStore) Flush() {
+	s.mux.Lock()
+	s.memorydb = make(map[string]entry)
+	s.mux.Unlock()
+}
+
+func (s *CacheStore) Close() error {
+	close(s.done)
+	if s.config.DBSave {
+		db, err := initDB(s.config.DBFileName)
+		if err != nil {
+			return err
+		}
+		defer db.Close()
+		return saveDB(db, s.memorydb)
+	}
+	return nil
+}
