@@ -18,6 +18,11 @@ type CacheStore struct {
 	config   Config
 }
 
+const (
+	TTLNoExpiry time.Duration = -1 // Key exists and does not expire
+	TTLExpired  time.Duration = -2 // Key does not exist or is expired
+)
+
 func NewCacheStore(cfg Config) (*CacheStore, error) {
 	store := &CacheStore{
 		memorydb: make(map[string]entry),
@@ -141,4 +146,57 @@ func (s *CacheStore) Close() error {
 		return saveDB(db, s.memorydb)
 	}
 	return nil
+}
+
+func (s *CacheStore) Exists(keys ...string) int {
+	now := uint32(time.Now().Unix())
+	count := 0
+
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	for _, key := range keys {
+		if e, ok := s.memorydb[key]; ok {
+			if e.expiry <= 0 || e.expiry > now {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func (s *CacheStore) Keys() []string {
+	now := uint32(time.Now().Unix())
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	keys := make([]string, 0, len(s.memorydb))
+	for key, e := range s.memorydb {
+		if e.expiry == 0 || e.expiry > now {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+func (s *CacheStore) TTL(key string) time.Duration {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	e, ok := s.memorydb[key]
+	if !ok {
+		return TTLExpired
+	}
+
+	if e.expiry <= 0 {
+		return TTLNoExpiry
+	}
+
+	now := uint32(time.Now().Unix())
+	if now >= e.expiry {
+		return TTLExpired
+	}
+
+	remaining := time.Duration(e.expiry-now) * time.Second
+	return remaining
 }
