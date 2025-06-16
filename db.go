@@ -9,7 +9,7 @@ import (
 )
 
 func initDB(filename string) (*sql.DB, error) {
-	if filename == "s" {
+	if filename == "" {
 		return nil, errors.New("filename cannot be empty")
 	}
 	db, err := sql.Open("sqlite3", filename)
