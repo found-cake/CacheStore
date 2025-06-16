@@ -3,6 +3,7 @@ package cachestore
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -48,6 +49,7 @@ func loadFromDB(db *sql.DB) (map[string]entry, error) {
 		var expiry uint32
 
 		if err := rows.Scan(&key, &data, &expiry); err != nil {
+			log.Println(err)
 			continue
 		}
 
