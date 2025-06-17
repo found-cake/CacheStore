@@ -2,7 +2,6 @@ package cachestore
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 
 func initDB(filename string) (*sql.DB, error) {
 	if filename == "" {
-		return nil, errors.New("filename cannot be empty")
+		return nil, ErrFileNameEmpty
 	}
 	db, err := sql.Open("sqlite3", filename)
 	if err != nil {
@@ -32,7 +31,7 @@ func initDB(filename string) (*sql.DB, error) {
 
 func loadFromDB(db *sql.DB) (map[string]entry, error) {
 	if db == nil {
-		return nil, errors.New("database not initialized")
+		return nil, ErrDBNotInit
 	}
 
 	rows, err := db.Query("SELECT key, data, expiry FROM cache_data")
@@ -68,7 +67,7 @@ func loadFromDB(db *sql.DB) (map[string]entry, error) {
 
 func saveDB(db *sql.DB, data map[string]entry) error {
 	if db == nil {
-		return errors.New("database not initialized")
+		return ErrDBNotInit
 	}
 
 	tx, err := db.Begin()

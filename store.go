@@ -1,7 +1,6 @@
 package cachestore
 
 import (
-	"errors"
 	"sync"
 	"time"
 )
@@ -80,7 +79,7 @@ func (s *CacheStore) cleanExpired() {
 
 func (s *CacheStore) Get(key string) ([]byte, error) {
 	if key == "" {
-		return nil, errors.New("key cannot be empty")
+		return nil, ErrKeyEmpty
 	}
 	s.mux.RLock()
 	v, ok := s.memorydb[key]
@@ -96,10 +95,10 @@ func (s *CacheStore) Get(key string) ([]byte, error) {
 
 func (s *CacheStore) Set(key string, value []byte, exp time.Duration) error {
 	if key == "" {
-		return errors.New("key cannot be empty")
+		return ErrKeyEmpty
 	}
 	if value == nil {
-		return errors.New("value cannot be null")
+		return ErrValueNil
 	}
 
 	var expiry uint32
@@ -119,7 +118,7 @@ func (s *CacheStore) Set(key string, value []byte, exp time.Duration) error {
 
 func (s *CacheStore) Delete(key string) error {
 	if key == "" {
-		return errors.New("key cannot be empty")
+		return ErrKeyEmpty
 	}
 
 	s.mux.Lock()
@@ -136,7 +135,13 @@ func (s *CacheStore) Flush() {
 }
 
 func (s *CacheStore) Close() error {
-	close(s.done)
+	select {
+	case <-s.done:
+		return nil
+	default:
+		close(s.done)
+	}
+
 	if s.config.DBSave {
 		db, err := initDB(s.config.DBFileName)
 		if err != nil {

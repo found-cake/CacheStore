@@ -3,7 +3,6 @@ package cachestore
 import (
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"math"
 	"time"
 )
@@ -45,7 +44,7 @@ func (s *CacheStore) GetUInt16(key string) (uint16, error) {
 		return 0, err
 	}
 	if len(data) < 2 {
-		return 0, fmt.Errorf("invalid data length for 16bit: %d", len(data))
+		return 0, ErrInvalidDataLength(2, len(data))
 	}
 	return binary.LittleEndian.Uint16(data), nil
 }
@@ -63,7 +62,7 @@ func (s *CacheStore) GetUInt32(key string) (uint32, error) {
 		return 0, err
 	}
 	if len(data) < 4 {
-		return 0, fmt.Errorf("invalid data length for 32bit: %d", len(data))
+		return 0, ErrInvalidDataLength(4, len(data))
 	}
 	return binary.LittleEndian.Uint32(data), nil
 }
@@ -81,7 +80,7 @@ func (s *CacheStore) GetUInt64(key string) (uint64, error) {
 		return 0, err
 	}
 	if len(data) < 8 {
-		return 0, fmt.Errorf("invalid data length for 64bit: %d", len(data))
+		return 0, ErrInvalidDataLength(8, len(data))
 	}
 	return binary.LittleEndian.Uint64(data), nil
 }
@@ -167,7 +166,7 @@ func (s *CacheStore) GetTime(key string) (time.Time, error) {
 		return t, err
 	}
 	if len(data) == 0 {
-		return t, fmt.Errorf("no data found for key %s", key)
+		return t, ErrNoDataForKey(key)
 	}
 	err = t.UnmarshalBinary(data)
 	return t, err
@@ -188,7 +187,7 @@ func (s *CacheStore) GetJSON(key string, target interface{}) error {
 		return err
 	}
 	if len(data) == 0 {
-		return fmt.Errorf("no data found for key %s", key)
+		return ErrNoDataForKey(key)
 	}
 	return json.Unmarshal(data, target)
 }
