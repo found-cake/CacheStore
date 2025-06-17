@@ -93,6 +93,24 @@ func (s *CacheStore) Get(key string) ([]byte, error) {
 	return v.data, nil
 }
 
+func (s *CacheStore) MGet(keys ...string) [][]byte {
+	result := make([][]byte, len(keys))
+	now := uint32(time.Now().Unix())
+
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	for i, key := range keys {
+		if entry, ok := s.memorydb[key]; ok {
+			if entry.expiry == 0 || entry.expiry > now {
+				result[i] = entry.data
+			}
+		}
+	}
+
+	return result
+}
+
 func (s *CacheStore) Set(key string, value []byte, exp time.Duration) error {
 	if key == "" {
 		return ErrKeyEmpty
