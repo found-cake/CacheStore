@@ -7,6 +7,7 @@ import (
 
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/store/types"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -21,6 +22,7 @@ func InitDB(filename string) (*sql.DB, error) {
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS cache_data (
 		key TEXT PRIMARY KEY,
+		data_type INTEGER,
 		data BLOB,
 		expiry INTEGER
 	)`)
@@ -36,7 +38,7 @@ func LoadFromDB(db *sql.DB) (map[string]entry.Entry, error) {
 		return nil, errors.ErrDBNotInit
 	}
 
-	rows, err := db.Query("SELECT key, data, expiry FROM cache_data")
+	rows, err := db.Query("SELECT key, data_type, data, expiry FROM cache_data")
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +48,11 @@ func LoadFromDB(db *sql.DB) (map[string]entry.Entry, error) {
 	now := uint32(time.Now().Unix())
 	for rows.Next() {
 		var key string
+		var dataType types.DataType
 		var data []byte
 		var expiry uint32
 
-		if err := rows.Scan(&key, &data, &expiry); err != nil {
+		if err := rows.Scan(&key, &dataType, &data, &expiry); err != nil {
 			log.Println(err)
 			continue
 		}
@@ -59,6 +62,7 @@ func LoadFromDB(db *sql.DB) (map[string]entry.Entry, error) {
 		}
 
 		dbData[key] = entry.Entry{
+			Type:   dataType,
 			Data:   data,
 			Expiry: expiry,
 		}
@@ -81,7 +85,7 @@ func SaveDB(db *sql.DB, data map[string]entry.Entry) error {
 	if _, err := tx.Exec("DELETE FROM cache_data"); err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("INSERT INTO cache_data (key, data, expiry) VALUES (?, ?, ?)")
+	stmt, err := tx.Prepare("INSERT INTO cache_data (key, data_type, data, expiry) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -94,7 +98,7 @@ func SaveDB(db *sql.DB, data map[string]entry.Entry) error {
 			continue
 		}
 
-		if _, err := stmt.Exec(key, entry.Data, entry.Expiry); err != nil {
+		if _, err := stmt.Exec(key, entry.Type, entry.Data, entry.Expiry); err != nil {
 			return err
 		}
 	}

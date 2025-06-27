@@ -1,9 +1,13 @@
 package store
 
-import "time"
+import (
+	"time"
+
+	"github.com/found-cake/CacheStore/store/types"
+)
 
 func (s *CacheStore) GetInt16(key string) (int16, error) {
-	if v, err := s.GetUInt16(key); err != nil {
+	if v, err := s.getNum16(key, types.INT16); err != nil {
 		return 0, err
 	} else {
 		return int16(v), nil
@@ -11,11 +15,11 @@ func (s *CacheStore) GetInt16(key string) (int16, error) {
 }
 
 func (s *CacheStore) SetInt16(key string, value int16, exp time.Duration) error {
-	return s.SetUInt16(key, uint16(value), exp)
+	return s.setNum16(key, types.INT16, uint16(value), exp)
 }
 
 func (s *CacheStore) GetInt32(key string) (int32, error) {
-	if v, err := s.GetUInt32(key); err != nil {
+	if v, err := s.getNum32(key, types.INT32); err != nil {
 		return 0, err
 	} else {
 		return int32(v), nil
@@ -23,11 +27,11 @@ func (s *CacheStore) GetInt32(key string) (int32, error) {
 }
 
 func (s *CacheStore) SetInt32(key string, value int32, exp time.Duration) error {
-	return s.SetUInt32(key, uint32(value), exp)
+	return s.setNum32(key, types.INT32, uint32(value), exp)
 }
 
 func (s *CacheStore) GetInt64(key string) (int64, error) {
-	if v, err := s.GetUInt64(key); err != nil {
+	if v, err := s.getNum64(key, types.INT64); err != nil {
 		return 0, err
 	} else {
 		return int64(v), nil
@@ -35,5 +39,5 @@ func (s *CacheStore) GetInt64(key string) (int64, error) {
 }
 
 func (s *CacheStore) SetInt64(key string, value int64, exp time.Duration) error {
-	return s.SetUInt64(key, uint64(value), exp)
+	return s.setNum64(key, types.INT64, uint64(value), exp)
 }

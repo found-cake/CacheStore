@@ -3,6 +3,8 @@ package errors
 import (
 	"errors"
 	"fmt"
+
+	"github.com/found-cake/CacheStore/store/types"
 )
 
 var (
@@ -18,4 +20,9 @@ func ErrInvalidDataLength(expected, actual int) error {
 
 func ErrNoDataForKey(key string) error {
 	return fmt.Errorf("no data found for key: %s", key)
+}
+
+func ErrTypeMismatch(key string, expected, actual types.DataType) error {
+	return fmt.Errorf("type mismatch for key '%s': expected %s, got %s",
+		key, expected.String(), actual.String())
 }
