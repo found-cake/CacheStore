@@ -65,28 +65,6 @@ func (s *CacheStore) Get(key string) ([]byte, error) {
 	return v.Data, nil
 }
 
-func (s *CacheStore) MGet(keys ...string) [][]byte {
-	if len(keys) == 0 {
-		return nil
-	}
-
-	result := make([][]byte, len(keys))
-	now := uint32(time.Now().Unix())
-
-	s.mux.RLock()
-	defer s.mux.RUnlock()
-
-	for i, key := range keys {
-		if e, ok := s.memorydb[key]; ok {
-			if !e.IsExpiredWithTime(now) {
-				result[i] = e.Data
-			}
-		}
-	}
-
-	return result
-}
-
 func (s *CacheStore) Set(key string, value []byte, expiry time.Duration) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
@@ -112,28 +90,6 @@ func (s *CacheStore) Delete(key string) error {
 	s.mux.Unlock()
 
 	return nil
-}
-
-func (s *CacheStore) MDelete(keys ...string) []error {
-	if len(keys) == 0 {
-		return nil
-	}
-
-	errs := make([]error, len(keys))
-
-	s.mux.Lock()
-	defer s.mux.Unlock()
-
-	for i, key := range keys {
-		if key == "" {
-			errs[i] = errors.ErrKeyEmpty
-			continue
-		}
-
-		delete(s.memorydb, key)
-	}
-
-	return errs
 }
 
 func (s *CacheStore) Flush() {
