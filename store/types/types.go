@@ -47,5 +47,7 @@ func (t DataType) String() string {
 		return "Time"
 	case JSON:
 		return "Json"
+	default:
+		return "Unknown"
 	}
 }
