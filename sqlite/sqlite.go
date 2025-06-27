@@ -62,6 +62,7 @@ func LoadFromDB(db *sql.DB) (map[string]entry.Entry, error) {
 		}
 
 		dbData[key] = entry.Entry{
+			Type:   dataType,
 			Data:   data,
 			Expiry: expiry,
 		}
