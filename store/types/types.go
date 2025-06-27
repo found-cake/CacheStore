@@ -3,7 +3,7 @@ package types
 type DataType uint8
 
 const (
-	UNKOWN DataType = iota
+	UNKNOWN DataType = iota
 	RAW
 	BOOLEAN
 	INT16
@@ -32,9 +32,9 @@ func (t DataType) String() string {
 	case INT64:
 		return "Integer64"
 	case UINT16:
-		return "unsinged integer16"
+		return "Unsigned integer16"
 	case UINT32:
-		return "Unsinged Integer32"
+		return "Unsigned Integer32"
 	case UINT64:
 		return "Unsigned Integer64"
 	case FLOAT32:

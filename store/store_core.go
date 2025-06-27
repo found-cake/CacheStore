@@ -52,16 +52,16 @@ func (s *CacheStore) cleanExpired() {
 
 func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	if key == "" {
-		return types.UNKOWN, nil, errors.ErrKeyEmpty
+		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
 	s.mux.RLock()
 	v, ok := s.memorydb[key]
 	s.mux.RUnlock()
 	if !ok {
-		return types.UNKOWN, nil, errors.ErrNoDataForKey(key)
+		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
 	}
 	if v.IsExpired() {
-		return types.UNKOWN, nil, errors.ErrNoDataForKey(key)
+		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
 	}
 	return v.Type, v.Data, nil
 }
