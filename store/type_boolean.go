@@ -1,11 +1,19 @@
 package store
 
-import "time"
+import (
+	"time"
+
+	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/store/types"
+)
 
 func (s *CacheStore) GetBool(key string) (bool, error) {
-	data, err := s.Get(key)
+	t, data, err := s.Get(key)
 	if err != nil {
 		return false, err
+	}
+	if t != types.BOOLEAN {
+		return false, errors.ErrTypeMismatch(key, types.BOOLEAN, t)
 	}
 	return len(data) > 0 && data[0] == 1, nil
 }
@@ -15,5 +23,5 @@ func (s *CacheStore) SetBool(key string, value bool, exp time.Duration) error {
 	if value {
 		v = 1
 	}
-	return s.Set(key, []byte{v}, exp)
+	return s.Set(key, types.BOOLEAN, []byte{v}, exp)
 }

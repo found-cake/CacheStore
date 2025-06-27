@@ -5,12 +5,16 @@ import (
 	"time"
 
 	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/store/types"
 )
 
 func (s *CacheStore) GetJSON(key string, target interface{}) error {
-	data, err := s.Get(key)
+	t, data, err := s.Get(key)
 	if err != nil {
 		return err
+	}
+	if t != types.JSON {
+		return errors.ErrTypeMismatch(key, types.JSON, t)
 	}
 	if len(data) == 0 {
 		return errors.ErrNoDataForKey(key)
@@ -22,6 +26,6 @@ func (s *CacheStore) SetJSON(key string, value interface{}, exp time.Duration) e
 	if data, err := json.Marshal(value); err != nil {
 		return err
 	} else {
-		return s.Set(key, data, exp)
+		return s.Set(key, types.JSON, data, exp)
 	}
 }
