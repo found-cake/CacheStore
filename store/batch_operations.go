@@ -5,16 +5,28 @@ import (
 
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/store/types"
 )
 
 type BatchItem struct {
 	Key    string
+	Type   types.DataType
 	Value  []byte
 	Expiry time.Duration
 }
 
+func NewItem(key string, dataType types.DataType, value []byte, expiry time.Duration) BatchItem {
+	return BatchItem{
+		Key:    key,
+		Type:   dataType,
+		Value:  value,
+		Expiry: expiry,
+	}
+}
+
 type BatchResult struct {
 	Key   string
+	Type  types.DataType
 	Value []byte
 	Error error
 }
@@ -38,6 +50,7 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 		}
 		if e, ok := s.memorydb[key]; ok {
 			if !e.IsExpiredWithTime(now) {
+				results[i].Type = e.Type
 				results[i].Value = e.Data
 			} else {
 				results[i].Error = errors.ErrNoDataForKey(key)
@@ -69,8 +82,7 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 			errs[i] = errors.ErrValueNil
 			continue
 		}
-
-		s.memorydb[item.Key] = entry.NewEntry(item.Value, item.Expiry)
+		s.memorydb[item.Key] = entry.NewEntry(item.Type, item.Value, item.Expiry)
 	}
 
 	return errs

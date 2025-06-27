@@ -8,6 +8,7 @@ import (
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/sqlite"
+	"github.com/found-cake/CacheStore/store/types"
 )
 
 type CacheStore struct {
@@ -49,23 +50,23 @@ func (s *CacheStore) cleanExpired() {
 	}
 }
 
-func (s *CacheStore) Get(key string) ([]byte, error) {
+func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	if key == "" {
-		return nil, errors.ErrKeyEmpty
+		return types.UNKOWN, nil, errors.ErrKeyEmpty
 	}
 	s.mux.RLock()
 	v, ok := s.memorydb[key]
 	s.mux.RUnlock()
 	if !ok {
-		return nil, errors.ErrNoDataForKey(key)
+		return types.UNKOWN, nil, errors.ErrNoDataForKey(key)
 	}
 	if v.IsExpired() {
-		return nil, errors.ErrNoDataForKey(key)
+		return types.UNKOWN, nil, errors.ErrNoDataForKey(key)
 	}
-	return v.Data, nil
+	return v.Type, v.Data, nil
 }
 
-func (s *CacheStore) Set(key string, value []byte, expiry time.Duration) error {
+func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
@@ -74,7 +75,7 @@ func (s *CacheStore) Set(key string, value []byte, expiry time.Duration) error {
 	}
 
 	s.mux.Lock()
-	s.memorydb[key] = entry.NewEntry(value, expiry)
+	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
 	s.mux.Unlock()
 
 	return nil
