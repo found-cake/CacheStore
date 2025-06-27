@@ -1,8 +1,13 @@
 package entry
 
-import "time"
+import (
+	"time"
+
+	"github.com/found-cake/CacheStore/store/types"
+)
 
 type Entry struct {
+	Type   types.DataType
 	Data   []byte
 	Expiry uint32
 }
@@ -15,12 +20,13 @@ func (e Entry) IsExpiredWithTime(now uint32) bool {
 	return e.Expiry > 0 && e.Expiry <= now
 }
 
-func NewEntry(data []byte, exp time.Duration) Entry {
+func NewEntry(dataType types.DataType, data []byte, exp time.Duration) Entry {
 	var expiry uint32
 	if exp > 0 {
 		expiry = uint32(time.Now().Add(exp).Unix())
 	}
 	return Entry{
+		Type:   dataType,
 		Data:   data,
 		Expiry: expiry,
 	}
