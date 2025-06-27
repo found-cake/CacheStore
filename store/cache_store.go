@@ -21,12 +21,14 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer db.Close()
-		if data, err := sqlite.LoadFromDB(db); err != nil {
+
+		data, err := sqlite.LoadFromDB(db)
+		db.Close()
+
+		if err != nil {
 			return nil, err
-		} else {
-			store.memorydb = data
 		}
+		store.memorydb = data
 	}
 
 	if cfg.GCInterval > 0 {
