@@ -32,7 +32,7 @@ func (t DataType) String() string {
 	case INT64:
 		return "Integer64"
 	case UINT16:
-		return "Unsigned integer16"
+		return "Unsigned Integer16"
 	case UINT32:
 		return "Unsigned Integer32"
 	case UINT64:
