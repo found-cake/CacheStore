@@ -55,15 +55,19 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
 	s.mux.RLock()
+	defer s.mux.RUnlock()
 	v, ok := s.memorydb[key]
-	s.mux.RUnlock()
+
 	if !ok {
 		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
 	}
 	if v.IsExpired() {
 		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
 	}
-	return v.Type, v.Data, nil
+
+	result := make([]byte, len(v.Data))
+	copy(result, v.Data)
+	return v.Type, result, nil
 }
 
 func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {

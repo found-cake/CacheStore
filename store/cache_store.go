@@ -3,6 +3,7 @@ package store
 import (
 	"github.com/found-cake/CacheStore/config"
 	"github.com/found-cake/CacheStore/entry"
+	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/sqlite"
 )
 
@@ -14,7 +15,7 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 	}
 	if cfg.DBSave {
 		if cfg.DBFileName == "" {
-			cfg.DBFileName = "cache.db"
+			return nil, errors.ErrFileNameEmpty
 		}
 		db, err := sqlite.InitDB(cfg.DBFileName)
 		if err != nil {

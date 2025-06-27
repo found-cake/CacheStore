@@ -50,8 +50,10 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 		}
 		if e, ok := s.memorydb[key]; ok {
 			if !e.IsExpiredWithTime(now) {
+				cData := make([]byte, len(e.Data))
+				copy(cData, e.Data)
 				results[i].Type = e.Type
-				results[i].Value = e.Data
+				results[i].Value = cData
 			} else {
 				results[i].Error = errors.ErrNoDataForKey(key)
 			}
