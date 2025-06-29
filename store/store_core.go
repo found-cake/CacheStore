@@ -213,3 +213,24 @@ func (s *CacheStore) TTL(key string) time.Duration {
 	remaining := time.Duration(e.Expiry-now) * time.Second
 	return remaining
 }
+
+func (s *CacheStore) Sync() {
+	s.mux.RLock()
+	snapshot := make(map[string]entry.Entry, len(s.memorydb))
+	for key, e := range s.memorydb {
+		dataCopy := make([]byte, len(e.Data))
+		copy(dataCopy, e.Data)
+
+		snapshot[key] = entry.Entry{
+			Type:   e.Type,
+			Data:   dataCopy,
+			Expiry: e.Expiry,
+		}
+	}
+	s.mux.RUnlock()
+	go func() {
+		if err := s.sqlitedb.Save(snapshot, false); err != nil {
+			log.Println(err)
+		}
+	}()
+}
