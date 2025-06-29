@@ -3,10 +3,10 @@ package config
 import "time"
 
 type Config struct {
-	GCInterval         time.Duration
-	DBSave             bool
-	DBFileName         string
-	DBAutoSaveInterval time.Duration
+	GCInterval     time.Duration
+	DBSave         bool
+	DBFileName     string
+	DBSaveInterval time.Duration
 }
 
 func DefaultConfig() Config {
