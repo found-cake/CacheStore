@@ -1,10 +1,10 @@
 package store
 
 import (
+	"log"
 	"sync"
 	"time"
 
-	"github.com/found-cake/CacheStore/config"
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/sqlite"
@@ -14,8 +14,8 @@ import (
 type CacheStore struct {
 	mux      sync.RWMutex
 	memorydb map[string]entry.Entry
-	done     chan bool
-	config   config.Config
+	sqlitedb *sqlite.SqliteStore
+	done     chan struct{}
 }
 
 const (
@@ -23,18 +23,57 @@ const (
 	TTLExpired  time.Duration = -2 // Key does not exist or is expired
 )
 
-func (s *CacheStore) gc() {
-	ticker := time.NewTicker(s.config.GCInterval)
-	defer ticker.Stop()
+func (s *CacheStore) createTicker(gcInterval time.Duration, saveInterval time.Duration) func() {
+	if gcInterval > 0 && saveInterval > 0 {
+		return func() {
+			gcticker := time.NewTicker(gcInterval)
+			dbticker := time.NewTicker(saveInterval)
+			defer gcticker.Stop()
+			defer dbticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			s.cleanExpired()
-		case <-s.done:
-			return
+			for {
+				select {
+				case <-gcticker.C:
+					s.cleanExpired()
+				case <-dbticker.C:
+					s.Sync()
+				case <-s.done:
+					return
+				}
+			}
 		}
 	}
+	if  gcInterval > 0 {
+		return func() {
+			gcticker := time.NewTicker(gcInterval)
+			defer gcticker.Stop()
+
+			for {
+				select {
+				case <-gcticker.C:
+					s.cleanExpired()
+				case <-s.done:
+					return
+				}
+			}
+		}
+	}
+	if saveInterval > 0 {
+		return func() {
+			dbticker := time.NewTicker(saveInterval)
+			defer dbticker.Stop()
+
+			for {
+				select {
+				case <-dbticker.C:
+					s.Sync()
+				case <-s.done:
+					return
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (s *CacheStore) cleanExpired() {
@@ -111,13 +150,13 @@ func (s *CacheStore) Close() error {
 		close(s.done)
 	}
 
-	if s.config.DBSave {
-		db, err := sqlite.InitDB(s.config.DBFileName)
-		if err != nil {
-			return err
-		}
-		defer db.Close()
-		return sqlite.SaveDB(db, s.memorydb)
+	if s.sqlitedb != nil {
+		defer func() {
+			if err := s.sqlitedb.Close(); err != nil {
+				log.Panicln(err)
+			}
+		}()
+		return s.sqlitedb.Save(s.memorydb, true)
 	}
 	return nil
 }
