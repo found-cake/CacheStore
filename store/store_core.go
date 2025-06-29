@@ -215,6 +215,10 @@ func (s *CacheStore) TTL(key string) time.Duration {
 }
 
 func (s *CacheStore) Sync() {
+	if s.sqlitedb == nil {
+		return
+	}
+	
 	s.mux.RLock()
 	snapshot := make(map[string]entry.Entry, len(s.memorydb))
 	for key, e := range s.memorydb {
