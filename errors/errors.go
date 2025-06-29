@@ -12,6 +12,7 @@ var (
 	ErrValueNil      = errors.New("value cannot be null")
 	ErrDBNotInit     = errors.New("database not initialized")
 	ErrFileNameEmpty = errors.New("filename cannot be empty")
+	ErrAlreadySave   = errors.New("save operation already in progress")
 )
 
 func ErrInvalidDataLength(expected, actual int) error {
