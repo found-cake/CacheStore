@@ -22,6 +22,9 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 		}
 		store.memorydb = data
 		store.sqlitedb = sqlitedb
+		if cfg.SaveDirtyData {
+			store.dirty = NewDirtyManager()
+		}
 	} else {
 		cfg.DBSaveInterval = 0
 	}

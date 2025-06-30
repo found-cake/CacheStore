@@ -14,6 +14,7 @@ import (
 type CacheStore struct {
 	mux      sync.RWMutex
 	memorydb map[string]entry.Entry
+	dirty    *dirtyManager
 	sqlitedb *sqlite.SqliteStore
 	done     chan struct{}
 }
@@ -43,7 +44,7 @@ func (s *CacheStore) createTicker(gcInterval time.Duration, saveInterval time.Du
 			}
 		}
 	}
-	if  gcInterval > 0 {
+	if gcInterval > 0 {
 		return func() {
 			gcticker := time.NewTicker(gcInterval)
 			defer gcticker.Stop()
@@ -121,6 +122,10 @@ func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expi
 	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
 	s.mux.Unlock()
 
+	if s.dirty != nil {
+		s.dirty.Set(key)
+	}
+
 	return nil
 }
 
@@ -133,6 +138,10 @@ func (s *CacheStore) Delete(key string) error {
 	delete(s.memorydb, key)
 	s.mux.Unlock()
 
+	if s.dirty != nil {
+		s.dirty.Delete(key)
+	}
+
 	return nil
 }
 
@@ -140,6 +149,7 @@ func (s *CacheStore) Flush() {
 	s.mux.Lock()
 	s.memorydb = make(map[string]entry.Entry)
 	s.mux.Unlock()
+	s.dirty.NeedFullSync()
 }
 
 func (s *CacheStore) Close() error {
@@ -218,7 +228,58 @@ func (s *CacheStore) Sync() {
 	if s.sqlitedb == nil {
 		return
 	}
-	
+	if s.dirty == nil {
+		s.FullSync()
+		return
+	}
+	s.dirty.mux.Lock()
+	defer s.dirty.mux.Unlock()
+	if s.dirty.needFullSync {
+		s.FullSync()
+		s.dirty.needFullSync = false
+		return
+	}
+
+	dirtySize := s.dirty.Size()
+	if dirtySize == 0 {
+		return
+	}
+
+	s.mux.RLock()
+	if dirtySize > 50 && dirtySize > (len(s.memorydb)/5) {
+		s.mux.RUnlock()
+		s.FullSync()
+		return
+	}
+
+	set_keys, delete_keys := s.dirty.Keys()
+	new_data := make(map[string]entry.Entry, len(set_keys))
+	for _, key := range set_keys {
+		if e, ok := s.memorydb[key]; ok {
+			dataCopy := make([]byte, len(e.Data))
+			copy(dataCopy, e.Data)
+
+			new_data[key] = entry.Entry{
+				Type:   e.Type,
+				Data:   dataCopy,
+				Expiry: e.Expiry,
+			}
+		}
+	}
+	s.mux.RUnlock()
+	s.dirty.Clear()
+	go func() {
+		if err := s.sqlitedb.SaveDirtyData(new_data, delete_keys); err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
+func (s *CacheStore) FullSync() {
+	if s.sqlitedb == nil {
+		return
+	}
+
 	s.mux.RLock()
 	snapshot := make(map[string]entry.Entry, len(s.memorydb))
 	for key, e := range s.memorydb {
@@ -232,6 +293,9 @@ func (s *CacheStore) Sync() {
 		}
 	}
 	s.mux.RUnlock()
+	if s.dirty != nil {
+		s.dirty.Clear()
+	}
 	go func() {
 		if err := s.sqlitedb.Save(snapshot, false); err != nil {
 			log.Println(err)

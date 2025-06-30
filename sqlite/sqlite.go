@@ -90,6 +90,67 @@ func (s *SqliteStore) LoadFromDB() (map[string]entry.Entry, error) {
 	return dbData, nil
 }
 
+func (s *SqliteStore) SaveDirtyData(set_dirtys map[string]entry.Entry, delete_dirtys []string) error {
+	if s.db == nil {
+		return errors.ErrDBNotInit
+	}
+
+	if len(set_dirtys) == 0 && len(delete_dirtys) == 0 {
+		return nil
+	}
+
+	if s.mux.TryLock() {
+		defer s.mux.Unlock()
+	} else {
+		return errors.ErrAlreadySave
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	insertStmt, err := tx.Prepare(`
+		INSERT INTO cache_data (key, data_type, data, expiry) 
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(key) DO UPDATE SET
+			data_type = excluded.data_type,
+			data = excluded.data,
+			expiry = excluded.expiry
+	`)
+	if err != nil {
+		return err
+	}
+	defer insertStmt.Close()
+
+	deleteStmt, err := tx.Prepare("DELETE FROM cache_data WHERE key = ?")
+	if err != nil {
+		return err
+	}
+	defer deleteStmt.Close()
+
+	now := uint32(time.Now().Unix())
+
+	for key, entry := range set_dirtys {
+		if entry.IsExpiredWithTime(now) {
+			continue
+		}
+
+		if _, err := insertStmt.Exec(key, entry.Type, entry.Data, entry.Expiry); err != nil {
+			return err
+		}
+	}
+
+	for _, key := range delete_dirtys {
+		if _, err := deleteStmt.Exec(key); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (s *SqliteStore) Save(data map[string]entry.Entry, force bool) error {
 	if s.db == nil {
 		return errors.ErrDBNotInit

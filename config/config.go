@@ -7,13 +7,15 @@ type Config struct {
 	DBSave         bool
 	DBFileName     string
 	DBSaveInterval time.Duration
+	SaveDirtyData  bool
 }
 
 func DefaultConfig() Config {
 	return Config{
-		GCInterval:         10 * time.Second,
-		DBSave:             true,
-		DBFileName:         "cache.db",
+		GCInterval:     10 * time.Second,
+		DBSave:         true,
+		DBFileName:     "cache.db",
 		DBSaveInterval: 10 * time.Minute,
+		SaveDirtyData:  true,
 	}
 }
