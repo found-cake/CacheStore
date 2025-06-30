@@ -269,7 +269,7 @@ func (s *CacheStore) Sync() {
 		}
 	}
 	s.mux.RUnlock()
-	s.dirty.Clear()
+	s.dirty.UnsafeClear()
 	go func() {
 		if err := s.sqlitedb.SaveDirtyData(new_data, delete_keys); err != nil {
 			log.Println(err)
