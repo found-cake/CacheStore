@@ -234,22 +234,25 @@ func (s *CacheStore) Sync() {
 		s.FullSync()
 		return
 	}
+
 	s.dirty.mux.Lock()
-	defer s.dirty.mux.Unlock()
 	if s.dirty.needFullSync {
-		s.FullSync()
 		s.dirty.needFullSync = false
+		s.dirty.mux.Unlock()
+		s.FullSync()
 		return
 	}
 
 	dirtySize := s.dirty.Size()
 	if dirtySize == 0 {
+		s.dirty.mux.Unlock()
 		return
 	}
 
 	s.mux.RLock()
 	if dirtySize > 50 && dirtySize > (len(s.memorydb)/5) {
 		s.mux.RUnlock()
+		s.dirty.mux.Unlock()
 		s.FullSync()
 		return
 	}
@@ -268,8 +271,11 @@ func (s *CacheStore) Sync() {
 			}
 		}
 	}
+
 	s.mux.RUnlock()
 	s.dirty.UnsafeClear()
+	s.dirty.mux.Unlock()
+
 	go func() {
 		if err := s.sqlitedb.SaveDirtyData(new_data, delete_keys); err != nil {
 			log.Println(err)
