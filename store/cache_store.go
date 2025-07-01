@@ -37,7 +37,11 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 	}
 
 	if intervalFunc := store.createTicker(cfg.GCInterval, cfg.DBSaveInterval); intervalFunc != nil {
-		go intervalFunc()
+		store.wg.Add(1)
+		go func() {
+			defer store.wg.Done()
+			intervalFunc()
+		}()
 	}
 
 	return store, nil

@@ -3,6 +3,7 @@ package store
 import (
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/found-cake/CacheStore/entry"
@@ -17,6 +18,8 @@ type CacheStore struct {
 	dirty    *dirtyManager
 	sqlitedb *sqlite.SqliteStore
 	done     chan struct{}
+	wg       sync.WaitGroup
+	closed   atomic.Bool
 }
 
 const (
@@ -154,23 +157,34 @@ func (s *CacheStore) Flush() {
 	}
 }
 
+func (s *CacheStore) IsClosed() bool {
+	return s.closed.Load()
+}
+
 func (s *CacheStore) Close() error {
-	select {
-	case <-s.done:
+	if s.IsClosed() {
 		return nil
-	default:
-		close(s.done)
 	}
 
+	s.closed.Store(true)
+
+	close(s.done)
+	s.wg.Wait()
+
+	var err error
 	if s.sqlitedb != nil {
 		defer func() {
 			if err := s.sqlitedb.Close(); err != nil {
-				log.Panicln(err)
+				log.Println(err)
 			}
 		}()
-		return s.sqlitedb.Save(s.memorydb, true)
+		err = s.sqlitedb.Save(s.memorydb, true)
 	}
-	return nil
+
+	s.memorydb = nil
+	s.dirty = nil
+
+	return err
 }
 
 func (s *CacheStore) Exists(keys ...string) int {
@@ -276,7 +290,9 @@ func (s *CacheStore) Sync() {
 	s.dirty.unsafeClear()
 	s.dirty.mux.Unlock()
 
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		if err := s.sqlitedb.SaveDirtyData(new_data, delete_keys); err != nil {
 			log.Println(err)
 		}
@@ -304,7 +320,10 @@ func (s *CacheStore) FullSync() {
 	if s.dirty != nil {
 		s.dirty.clear()
 	}
+
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		if err := s.sqlitedb.Save(snapshot, false); err != nil {
 			log.Println(err)
 		}
