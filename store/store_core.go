@@ -123,7 +123,7 @@ func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expi
 	s.mux.Unlock()
 
 	if s.dirty != nil {
-		s.dirty.Set(key)
+		s.dirty.set(key)
 	}
 
 	return nil
@@ -139,7 +139,7 @@ func (s *CacheStore) Delete(key string) error {
 	s.mux.Unlock()
 
 	if s.dirty != nil {
-		s.dirty.Delete(key)
+		s.dirty.delete(key)
 	}
 
 	return nil
@@ -243,21 +243,21 @@ func (s *CacheStore) Sync() {
 		return
 	}
 
-	dirtySize := s.dirty.Size()
+	dirtySize := s.dirty.size()
 	if dirtySize == 0 {
 		s.dirty.mux.Unlock()
 		return
 	}
 
 	s.mux.RLock()
-	if dirtySize > 50 && dirtySize > (len(s.memorydb)/5) {
+	if dirtySize > s.dirty.ThresholdCount && dirtySize > int(float64(len(s.memorydb))*s.dirty.ThresholdRatio) {
 		s.mux.RUnlock()
 		s.dirty.mux.Unlock()
 		s.FullSync()
 		return
 	}
 
-	set_keys, delete_keys := s.dirty.Keys()
+	set_keys, delete_keys := s.dirty.keys()
 	new_data := make(map[string]entry.Entry, len(set_keys))
 	for _, key := range set_keys {
 		if e, ok := s.memorydb[key]; ok {
@@ -273,7 +273,7 @@ func (s *CacheStore) Sync() {
 	}
 
 	s.mux.RUnlock()
-	s.dirty.UnsafeClear()
+	s.dirty.unsafeClear()
 	s.dirty.mux.Unlock()
 
 	go func() {
@@ -302,7 +302,7 @@ func (s *CacheStore) FullSync() {
 	}
 	s.mux.RUnlock()
 	if s.dirty != nil {
-		s.dirty.Clear()
+		s.dirty.clear()
 	}
 	go func() {
 		if err := s.sqlitedb.Save(snapshot, false); err != nil {

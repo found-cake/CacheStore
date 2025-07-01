@@ -8,11 +8,13 @@ import (
 )
 
 var (
-	ErrKeyEmpty      = errors.New("key cannot be empty")
-	ErrValueNil      = errors.New("value cannot be null")
-	ErrDBNotInit     = errors.New("database not initialized")
-	ErrFileNameEmpty = errors.New("filename cannot be empty")
-	ErrAlreadySave   = errors.New("save operation already in progress")
+	ErrKeyEmpty            = errors.New("key cannot be empty")
+	ErrValueNil            = errors.New("value cannot be null")
+	ErrDBNotInit           = errors.New("database not initialized")
+	ErrFileNameEmpty       = errors.New("filename cannot be empty")
+	ErrAlreadySave         = errors.New("save operation already in progress")
+	ErrDirtyThresholdCount = errors.New("DirtyThresholdCount is greater than '0'")
+	ErrDirtyThresholdRatio = errors.New("DirtyThresholdRatio is '0 ~ 1'")
 )
 
 func ErrInvalidDataLength(expected, actual int) error {

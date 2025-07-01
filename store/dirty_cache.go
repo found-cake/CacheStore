@@ -10,56 +10,60 @@ const (
 )
 
 type dirtyManager struct {
-	mux          sync.RWMutex
-	dirtyData    map[string]DirtyAction
-	needFullSync bool
+	mux            sync.RWMutex
+	dirtyData      map[string]DirtyAction
+	needFullSync   bool
+	ThresholdCount int
+	ThresholdRatio float64
 }
 
-func NewDirtyManager() *dirtyManager {
+func newDirtyManager(count int, ratio float64) *dirtyManager {
 	return &dirtyManager{
-		dirtyData: make(map[string]DirtyAction),
+		dirtyData:      make(map[string]DirtyAction),
+		ThresholdCount: count,
+		ThresholdRatio: ratio,
 	}
 }
 
-func (d *dirtyManager) UnsafeClear() {
+func (d *dirtyManager) unsafeClear() {
 	d.dirtyData = make(map[string]DirtyAction)
 }
 
-func (d *dirtyManager) Clear() {
+func (d *dirtyManager) clear() {
 	d.mux.Lock()
 	defer d.mux.Unlock()
 	d.dirtyData = make(map[string]DirtyAction)
 }
 
-func (d *dirtyManager) UnsafeSet(key string) {
+func (d *dirtyManager) unsafeSet(key string) {
 	if !d.needFullSync {
 		d.dirtyData[key] = DirtySet
 	}
 }
 
-func (d *dirtyManager) Set(key string) {
+func (d *dirtyManager) set(key string) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
-	d.UnsafeSet(key)
+	d.unsafeSet(key)
 }
 
-func (d *dirtyManager) UnsafeDelete(key string) {
+func (d *dirtyManager) unsafeDelete(key string) {
 	if !d.needFullSync {
 		d.dirtyData[key] = DirtyDelete
 	}
 }
 
-func (d *dirtyManager) Delete(key string) {
+func (d *dirtyManager) delete(key string) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
-	d.UnsafeDelete(key)
+	d.unsafeDelete(key)
 }
 
-func (d *dirtyManager) Size() int {
+func (d *dirtyManager) size() int {
 	return len(d.dirtyData)
 }
 
-func (d *dirtyManager) Keys() ([]string, []string) {
+func (d *dirtyManager) keys() ([]string, []string) {
 	set_keys := make([]string, 0, len(d.dirtyData))
 	delete_keys := make([]string, 0, len(d.dirtyData))
 	for key, action := range d.dirtyData {

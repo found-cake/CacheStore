@@ -87,7 +87,7 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 			continue
 		}
 		s.memorydb[item.Key] = entry.NewEntry(item.Type, item.Value, item.Expiry)
-		s.dirty.UnsafeSet(item.Key)
+		s.dirty.unsafeSet(item.Key)
 	}
 
 	return errs
@@ -112,7 +112,7 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 		}
 
 		delete(s.memorydb, key)
-		s.dirty.UnsafeDelete(key)
+		s.dirty.unsafeDelete(key)
 	}
 
 	return errs

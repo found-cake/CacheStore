@@ -3,6 +3,7 @@ package store
 import (
 	"github.com/found-cake/CacheStore/config"
 	"github.com/found-cake/CacheStore/entry"
+	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/sqlite"
 )
 
@@ -23,7 +24,13 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 		store.memorydb = data
 		store.sqlitedb = sqlitedb
 		if cfg.SaveDirtyData {
-			store.dirty = NewDirtyManager()
+			if cfg.DirtyThresholdCount <= 0 {
+				return nil, errors.ErrDirtyThresholdCount
+			}
+			if cfg.DirtyThresholdRatio <= 0 || cfg.DirtyThresholdRatio > 1 {
+				return nil, errors.ErrDirtyThresholdRatio
+			}
+			store.dirty = newDirtyManager(cfg.DirtyThresholdCount, cfg.DirtyThresholdRatio)
 		}
 	} else {
 		cfg.DBSaveInterval = 0
