@@ -66,7 +66,7 @@ func (s *CacheStore) DecrUInt16(key string, delta uint16, exp time.Duration) err
 	if value < delta {
 		return errors.ErrUnsignedUnderflow(key, value, delta)
 	}
-	value += delta
+	value -= delta
 	data := num16tob(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.UINT16, data, exp)
@@ -135,7 +135,7 @@ func (s *CacheStore) DecrUInt32(key string, delta uint32, exp time.Duration) err
 	if value < delta {
 		return errors.ErrUnsignedUnderflow(key, value, delta)
 	}
-	value += delta
+	value -= delta
 	data := num32tob(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.UINT32, data, exp)
@@ -204,7 +204,7 @@ func (s *CacheStore) DecrUInt64(key string, delta uint64, exp time.Duration) err
 	if value < delta {
 		return errors.ErrUnsignedUnderflow(key, value, delta)
 	}
-	value += delta
+	value -= delta
 	data := num64tob(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.UINT64, data, exp)

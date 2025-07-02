@@ -110,7 +110,7 @@ func (s *CacheStore) IncrInt64(key string, delta int64, exp time.Duration) error
 	e, err := s.unsafeGet(key)
 	if err != nil || e.IsExpired() {
 		data := num64tob(uint64(delta))
-		s.unsafeSet(key, types.INT16, data, exp)
+		s.unsafeSet(key, types.INT64, data, exp)
 		return nil
 	}
 	if e.Type != types.INT64 {

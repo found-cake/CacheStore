@@ -60,7 +60,7 @@ func (s *CacheStore) GetFloat64(key string) (float64, error) {
 
 func (s *CacheStore) SetFloat64(key string, value float64, exp time.Duration) error {
 	bits := math.Float64bits(value)
-	return s.Set(key, types.FLOAT32, num64tob(bits), exp)
+	return s.Set(key, types.FLOAT64, num64tob(bits), exp)
 }
 
 func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) error {
