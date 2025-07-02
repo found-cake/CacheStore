@@ -93,16 +93,23 @@ func (s *CacheStore) cleanExpired() {
 	}
 }
 
+func (s *CacheStore) unsafeGet(key string) (entry.Entry, error) {
+	if v, ok := s.memorydb[key]; !ok {
+		return v, errors.ErrNoDataForKey(key)
+	} else {
+		return v, nil
+	}
+}
+
 func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	if key == "" {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
 	s.mux.RLock()
 	defer s.mux.RUnlock()
-	v, ok := s.memorydb[key]
-
-	if !ok {
-		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
+	v, err := s.unsafeGet(key)
+	if err != nil {
+		return types.UNKNOWN, nil, err
 	}
 	if v.IsExpired() {
 		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
@@ -111,6 +118,14 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	result := make([]byte, len(v.Data))
 	copy(result, v.Data)
 	return v.Type, result, nil
+}
+
+func (s *CacheStore) unsafeSet(key string, dataType types.DataType, value []byte, expiry time.Duration) {
+	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
+
+	if s.dirty != nil {
+		s.dirty.set(key)
+	}
 }
 
 func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {
