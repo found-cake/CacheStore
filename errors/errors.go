@@ -7,6 +7,10 @@ import (
 	"github.com/found-cake/CacheStore/store/types"
 )
 
+type unsigned interface {
+	~uint16 | ~uint32 | ~uint64
+}
+
 var (
 	ErrKeyEmpty            = errors.New("key cannot be empty")
 	ErrValueNil            = errors.New("value cannot be null")
@@ -28,4 +32,8 @@ func ErrNoDataForKey(key string) error {
 func ErrTypeMismatch(key string, expected, actual types.DataType) error {
 	return fmt.Errorf("type mismatch for key '%s': expected %s, got %s",
 		key, expected.String(), actual.String())
+}
+
+func ErrUnsignedUnderflow[T unsigned](key string, current T, delta T) error {
+	return fmt.Errorf("unsigned integer underflow for key '%s': current value %v is less than delta %v", key, current, delta)
 }
