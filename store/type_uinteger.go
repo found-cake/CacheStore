@@ -52,9 +52,7 @@ func (s *CacheStore) DecrUInt16(key string, delta uint16, exp time.Duration) err
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil || e.IsExpired() {
-		data := num16tob(delta)
-		s.unsafeSet(key, types.UINT16, data, exp)
-		return nil
+		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT16 {
 		return errors.ErrTypeMismatch(key, types.UINT16, e.Type)
@@ -121,9 +119,7 @@ func (s *CacheStore) DecrUInt32(key string, delta uint32, exp time.Duration) err
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil || e.IsExpired() {
-		data := num32tob(delta)
-		s.unsafeSet(key, types.UINT32, data, exp)
-		return nil
+		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT32 {
 		return errors.ErrTypeMismatch(key, types.UINT32, e.Type)
@@ -190,9 +186,7 @@ func (s *CacheStore) DecrUInt64(key string, delta uint64, exp time.Duration) err
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil || e.IsExpired() {
-		data := num64tob(delta)
-		s.unsafeSet(key, types.UINT64, data, exp)
-		return nil
+		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT64 {
 		return errors.ErrTypeMismatch(key, types.UINT64, e.Type)
