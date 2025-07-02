@@ -3,9 +3,21 @@ package store
 import (
 	"encoding/binary"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/store/types"
 )
+
+func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry uint32) {
+	s.memorydb[key] = entry.Entry{
+		Type:   dataType,
+		Data:   value,
+		Expiry: expiry,
+	}
+	if s.dirty != nil {
+		s.dirty.set(key)
+	}
+}
 
 func b2num16(data []byte) (uint16, error) {
 	if len(data) != 2 {
