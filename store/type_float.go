@@ -17,7 +17,7 @@ func (s *CacheStore) GetFloat32(key string) (float32, error) {
 
 func (s *CacheStore) SetFloat32(key string, value float32, exp time.Duration) error {
 	bits := math.Float32bits(value)
-	return s.setNum32(key, types.FLOAT32, bits, exp)
+	return s.Set(key, types.FLOAT32, num32tob(bits), exp)
 }
 
 func (s *CacheStore) GetFloat64(key string) (float64, error) {
@@ -30,5 +30,5 @@ func (s *CacheStore) GetFloat64(key string) (float64, error) {
 
 func (s *CacheStore) SetFloat64(key string, value float64, exp time.Duration) error {
 	bits := math.Float64bits(value)
-	return s.setNum64(key, types.FLOAT64, bits, exp)
+	return s.Set(key, types.FLOAT32, num64tob(bits), exp)
 }

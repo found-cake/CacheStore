@@ -11,7 +11,7 @@ func (s *CacheStore) GetUInt16(key string) (uint16, error) {
 }
 
 func (s *CacheStore) SetUInt16(key string, value uint16, exp time.Duration) error {
-	return s.setNum16(key, types.UINT16, value, exp)
+	return s.Set(key, types.UINT16, num16tob(value), exp)
 }
 
 func (s *CacheStore) GetUInt32(key string) (uint32, error) {
@@ -19,7 +19,7 @@ func (s *CacheStore) GetUInt32(key string) (uint32, error) {
 }
 
 func (s *CacheStore) SetUInt32(key string, value uint32, exp time.Duration) error {
-	return s.setNum32(key, types.UINT32, value, exp)
+	return s.Set(key, types.UINT32, num32tob(value), exp)
 }
 
 func (s *CacheStore) GetUInt64(key string) (uint64, error) {
@@ -27,5 +27,5 @@ func (s *CacheStore) GetUInt64(key string) (uint64, error) {
 }
 
 func (s *CacheStore) SetUInt64(key string, value uint64, exp time.Duration) error {
-	return s.setNum64(key, types.UINT64, value, exp)
+	return s.Set(key, types.UINT64, num64tob(value), exp)
 }
