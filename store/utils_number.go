@@ -33,14 +33,19 @@ func num16tob(value uint16) []byte {
 }
 
 func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num16(data)
+	return b2num16(e.Data)
 }
 
 func b2num32(data []byte) (uint32, error) {
@@ -57,14 +62,19 @@ func num32tob(value uint32) []byte {
 }
 
 func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num32(data)
+	return b2num32(e.Data)
 }
 
 func b2num64(data []byte) (uint64, error) {
@@ -81,12 +91,17 @@ func num64tob(value uint64) []byte {
 }
 
 func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num64(data)
+	return b2num64(e.Data)
 }
