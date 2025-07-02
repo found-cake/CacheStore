@@ -74,6 +74,8 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
+	s.dirty.mux.Lock()
+	defer s.dirty.mux.Unlock()
 
 	for i, item := range items {
 		if item.Key == "" {
@@ -85,6 +87,7 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 			continue
 		}
 		s.memorydb[item.Key] = entry.NewEntry(item.Type, item.Value, item.Expiry)
+		s.dirty.unsafeSet(item.Key)
 	}
 
 	return errs
@@ -99,6 +102,8 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
+	s.dirty.mux.Lock()
+	defer s.dirty.mux.Unlock()
 
 	for i, key := range keys {
 		if key == "" {
@@ -107,6 +112,7 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 		}
 
 		delete(s.memorydb, key)
+		s.dirty.unsafeDelete(key)
 	}
 
 	return errs
