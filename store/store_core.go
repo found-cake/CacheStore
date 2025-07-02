@@ -94,11 +94,14 @@ func (s *CacheStore) cleanExpired() {
 }
 
 func (s *CacheStore) unsafeGet(key string) (entry.Entry, error) {
-	if v, ok := s.memorydb[key]; !ok {
+	v, ok := s.memorydb[key]
+	if !ok {
 		return v, errors.ErrNoDataForKey(key)
-	} else {
-		return v, nil
 	}
+	if v.IsExpired() {
+		return v, errors.ErrNoDataForKey(key)
+	}
+	return v, nil
 }
 
 func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
@@ -110,9 +113,6 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	v, err := s.unsafeGet(key)
 	if err != nil {
 		return types.UNKNOWN, nil, err
-	}
-	if v.IsExpired() {
-		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
 	}
 
 	result := make([]byte, len(v.Data))

@@ -22,7 +22,7 @@ func (s *CacheStore) IncrUInt16(key string, delta uint16, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num16tob(delta)
 		s.unsafeSet(key, types.UINT16, data, exp)
 		return nil
@@ -51,7 +51,7 @@ func (s *CacheStore) DecrUInt16(key string, delta uint16, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT16 {
@@ -89,7 +89,7 @@ func (s *CacheStore) IncrUInt32(key string, delta uint32, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num32tob(delta)
 		s.unsafeSet(key, types.UINT32, data, exp)
 		return nil
@@ -118,7 +118,7 @@ func (s *CacheStore) DecrUInt32(key string, delta uint32, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT32 {
@@ -156,7 +156,7 @@ func (s *CacheStore) IncrUInt64(key string, delta uint64, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num64tob(delta)
 		s.unsafeSet(key, types.UINT64, data, exp)
 		return nil
@@ -185,7 +185,7 @@ func (s *CacheStore) DecrUInt64(key string, delta uint64, exp time.Duration) err
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != types.UINT64 {

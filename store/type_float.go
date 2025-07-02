@@ -28,7 +28,7 @@ func (s *CacheStore) IncrFloat32(key string, delta float32, exp time.Duration) e
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num32tob(math.Float32bits(delta))
 		s.unsafeSet(key, types.FLOAT32, data, exp)
 		return nil

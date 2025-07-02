@@ -26,7 +26,7 @@ func (s *CacheStore) IncrInt16(key string, delta int16, exp time.Duration) error
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num16tob(uint16(delta))
 		s.unsafeSet(key, types.INT16, data, exp)
 		return nil
@@ -67,7 +67,7 @@ func (s *CacheStore) IncrInt32(key string, delta int32, exp time.Duration) error
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num32tob(uint32(delta))
 		s.unsafeSet(key, types.INT32, data, exp)
 		return nil
@@ -108,7 +108,7 @@ func (s *CacheStore) IncrInt64(key string, delta int64, exp time.Duration) error
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := num64tob(uint64(delta))
 		s.unsafeSet(key, types.INT64, data, exp)
 		return nil
