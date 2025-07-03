@@ -69,7 +69,7 @@ func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) e
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
-	if err != nil || e.IsExpired() {
+	if err != nil {
 		data := utils.Float64toBinary(delta)
 		s.unsafeSet(key, types.FLOAT64, data, exp)
 		return nil
