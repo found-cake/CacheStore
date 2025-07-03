@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetFloat32(key string) (float32, error) {
@@ -17,8 +18,7 @@ func (s *CacheStore) GetFloat32(key string) (float32, error) {
 }
 
 func (s *CacheStore) SetFloat32(key string, value float32, exp time.Duration) error {
-	bits := math.Float32bits(value)
-	return s.Set(key, types.FLOAT32, num32tob(bits), exp)
+	return s.Set(key, types.FLOAT32, utils.Float32toBinary(value), exp)
 }
 
 func (s *CacheStore) IncrFloat32(key string, delta float32, exp time.Duration) error {
@@ -29,19 +29,19 @@ func (s *CacheStore) IncrFloat32(key string, delta float32, exp time.Duration) e
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
-		data := num32tob(math.Float32bits(delta))
+		data := utils.Float32toBinary(delta)
 		s.unsafeSet(key, types.FLOAT32, data, exp)
 		return nil
 	}
 	if e.Type != types.FLOAT32 {
 		return errors.ErrTypeMismatch(key, types.FLOAT32, e.Type)
 	}
-	uvalue, err := b2num32(e.Data)
+	value, err := utils.Binary2Float32(e.Data)
 	if err != nil {
 		return err
 	}
-	value := math.Float32frombits(uvalue) + delta
-	data := num32tob(math.Float32bits(value))
+	value += delta
+	data := utils.Float32toBinary(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.FLOAT32, data, exp)
 	} else {
@@ -59,8 +59,7 @@ func (s *CacheStore) GetFloat64(key string) (float64, error) {
 }
 
 func (s *CacheStore) SetFloat64(key string, value float64, exp time.Duration) error {
-	bits := math.Float64bits(value)
-	return s.Set(key, types.FLOAT64, num64tob(bits), exp)
+	return s.Set(key, types.FLOAT64, utils.Float64toBinary(value), exp)
 }
 
 func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) error {
@@ -71,19 +70,19 @@ func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) e
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil || e.IsExpired() {
-		data := num64tob(math.Float64bits(delta))
+		data := utils.Float64toBinary(delta)
 		s.unsafeSet(key, types.FLOAT64, data, exp)
 		return nil
 	}
 	if e.Type != types.FLOAT64 {
 		return errors.ErrTypeMismatch(key, types.FLOAT64, e.Type)
 	}
-	uvalue, err := b2num64(e.Data)
+	value, err := utils.Binary2Float64(e.Data)
 	if err != nil {
 		return err
 	}
-	value := math.Float64frombits(uvalue) + delta
-	data := num64tob(math.Float64bits(value))
+	value += delta
+	data := utils.Float64toBinary(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.FLOAT64, data, exp)
 	} else {

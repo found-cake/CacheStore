@@ -1,11 +1,10 @@
 package store
 
 import (
-	"encoding/binary"
-
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry uint32) {
@@ -17,19 +16,6 @@ func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byt
 	if s.dirty != nil {
 		s.dirty.set(key)
 	}
-}
-
-func b2num16(data []byte) (uint16, error) {
-	if len(data) != 2 {
-		return 0, errors.ErrInvalidDataLength(2, len(data))
-	}
-	return binary.LittleEndian.Uint16(data), nil
-}
-
-func num16tob(value uint16) []byte {
-	buffer := make([]byte, 2)
-	binary.LittleEndian.PutUint16(buffer, value)
-	return buffer
 }
 
 func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, error) {
@@ -45,20 +31,7 @@ func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, erro
 	if e.Type != expected {
 		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num16(e.Data)
-}
-
-func b2num32(data []byte) (uint32, error) {
-	if len(data) != 4 {
-		return 0, errors.ErrInvalidDataLength(4, len(data))
-	}
-	return binary.LittleEndian.Uint32(data), nil
-}
-
-func num32tob(value uint32) []byte {
-	buffer := make([]byte, 4)
-	binary.LittleEndian.PutUint32(buffer, value)
-	return buffer
+	return utils.Binary2UInt16(e.Data)
 }
 
 func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, error) {
@@ -74,20 +47,7 @@ func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, erro
 	if e.Type != expected {
 		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num32(e.Data)
-}
-
-func b2num64(data []byte) (uint64, error) {
-	if len(data) != 8 {
-		return 0, errors.ErrInvalidDataLength(8, len(data))
-	}
-	return binary.LittleEndian.Uint64(data), nil
-}
-
-func num64tob(value uint64) []byte {
-	buffer := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buffer, value)
-	return buffer
+	return utils.Binary2UInt32(e.Data)
 }
 
 func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, error) {
@@ -103,5 +63,5 @@ func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, erro
 	if e.Type != expected {
 		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	return b2num64(e.Data)
+	return utils.Binary2UInt64(e.Data)
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/sqlite"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type CacheStore struct {

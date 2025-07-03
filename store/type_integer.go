@@ -4,7 +4,8 @@ import (
 	"time"
 
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetInt16(key string) (int16, error) {
@@ -16,7 +17,7 @@ func (s *CacheStore) GetInt16(key string) (int16, error) {
 }
 
 func (s *CacheStore) SetInt16(key string, value int16, exp time.Duration) error {
-	return s.Set(key, types.INT16, num16tob(uint16(value)), exp)
+	return s.Set(key, types.INT16, utils.Int16toBinary(value), exp)
 }
 
 func (s *CacheStore) IncrInt16(key string, delta int16, exp time.Duration) error {
@@ -27,19 +28,19 @@ func (s *CacheStore) IncrInt16(key string, delta int16, exp time.Duration) error
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
-		data := num16tob(uint16(delta))
+		data := utils.Int16toBinary(delta)
 		s.unsafeSet(key, types.INT16, data, exp)
 		return nil
 	}
 	if e.Type != types.INT16 {
 		return errors.ErrTypeMismatch(key, types.INT16, e.Type)
 	}
-	uvalue, err := b2num16(e.Data)
+	value, err := utils.Binary2Int16(e.Data)
 	if err != nil {
 		return err
 	}
-	value := int16(uvalue) + delta
-	data := num16tob(uint16(value))
+	value += delta
+	data := utils.Int16toBinary(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.INT16, data, exp)
 	} else {
@@ -57,7 +58,7 @@ func (s *CacheStore) GetInt32(key string) (int32, error) {
 }
 
 func (s *CacheStore) SetInt32(key string, value int32, exp time.Duration) error {
-	return s.Set(key, types.INT32, num32tob(uint32(value)), exp)
+	return s.Set(key, types.INT32, utils.Int32toBinary(value), exp)
 }
 
 func (s *CacheStore) IncrInt32(key string, delta int32, exp time.Duration) error {
@@ -68,19 +69,19 @@ func (s *CacheStore) IncrInt32(key string, delta int32, exp time.Duration) error
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
-		data := num32tob(uint32(delta))
+		data := utils.Int32toBinary(delta)
 		s.unsafeSet(key, types.INT32, data, exp)
 		return nil
 	}
 	if e.Type != types.INT32 {
 		return errors.ErrTypeMismatch(key, types.INT32, e.Type)
 	}
-	uvalue, err := b2num32(e.Data)
+	value, err := utils.Binary2Int32(e.Data)
 	if err != nil {
 		return err
 	}
-	value := int32(uvalue) + delta
-	data := num32tob(uint32(value))
+	value += delta
+	data := utils.Int32toBinary(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.INT32, data, exp)
 	} else {
@@ -98,7 +99,7 @@ func (s *CacheStore) GetInt64(key string) (int64, error) {
 }
 
 func (s *CacheStore) SetInt64(key string, value int64, exp time.Duration) error {
-	return s.Set(key, types.INT64, num64tob(uint64(value)), exp)
+	return s.Set(key, types.INT64, utils.Int64toBinary(value), exp)
 }
 
 func (s *CacheStore) IncrInt64(key string, delta int64, exp time.Duration) error {
@@ -109,19 +110,19 @@ func (s *CacheStore) IncrInt64(key string, delta int64, exp time.Duration) error
 	defer s.mux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
-		data := num64tob(uint64(delta))
+		data := utils.Int64toBinary(delta)
 		s.unsafeSet(key, types.INT64, data, exp)
 		return nil
 	}
 	if e.Type != types.INT64 {
 		return errors.ErrTypeMismatch(key, types.INT64, e.Type)
 	}
-	uvalue, err := b2num64(e.Data)
+	value, err := utils.Binary2Int64(e.Data)
 	if err != nil {
 		return err
 	}
-	value := int64(uvalue) + delta
-	data := num64tob(uint64(value))
+	value += delta
+	data := utils.Int64toBinary(value)
 	if exp > 0 {
 		s.unsafeSet(key, types.INT64, data, exp)
 	} else {

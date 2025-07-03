@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type unsigned interface {

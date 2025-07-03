@@ -8,7 +8,7 @@ import (
 
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils/types"
 	_ "github.com/mattn/go-sqlite3"
 )
 

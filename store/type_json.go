@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetJSON(key string, target interface{}) error {
