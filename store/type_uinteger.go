@@ -35,6 +35,9 @@ func (s *CacheStore) IncrUInt16(key string, delta uint16, exp time.Duration) err
 	if err != nil {
 		return err
 	}
+	if utils.UInt16CheckOverFlow(value, delta) {
+		return errors.ErrValueOverflow(key, types.UINT16, value, delta)
+	}
 	value += delta
 	data := utils.UInt16toBinary(value)
 	if exp > 0 {
@@ -102,6 +105,9 @@ func (s *CacheStore) IncrUInt32(key string, delta uint32, exp time.Duration) err
 	if err != nil {
 		return err
 	}
+	if utils.UInt32CheckOverFlow(value, delta) {
+		return errors.ErrValueOverflow(key, types.UINT32, value, delta)
+	}
 	value += delta
 	data := utils.UInt32toBinary(value)
 	if exp > 0 {
@@ -168,6 +174,9 @@ func (s *CacheStore) IncrUInt64(key string, delta uint64, exp time.Duration) err
 	value, err := utils.Binary2UInt64(e.Data)
 	if err != nil {
 		return err
+	}
+	if utils.UInt64CheckOverFlow(value, delta) {
+		return errors.ErrValueOverflow(key, types.UINT64, value, delta)
 	}
 	value += delta
 	data := utils.UInt64toBinary(value)

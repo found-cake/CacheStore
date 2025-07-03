@@ -40,6 +40,9 @@ func (s *CacheStore) IncrFloat32(key string, delta float32, exp time.Duration) e
 	if err != nil {
 		return err
 	}
+	if utils.Float32CheckOver(value, delta) {
+		return errors.ErrValueOverflow(key, types.FLOAT32, value, delta)
+	}
 	value += delta
 	data := utils.Float32toBinary(value)
 	if exp > 0 {
@@ -81,6 +84,9 @@ func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) e
 	if err != nil {
 		return err
 	}
+	if utils.Float64CheckOver(value, delta) {
+		return errors.ErrValueOverflow(key, types.FLOAT64, value, delta)
+	} 
 	value += delta
 	data := utils.Float64toBinary(value)
 	if exp > 0 {

@@ -7,6 +7,68 @@ import (
 	"github.com/found-cake/CacheStore/errors"
 )
 
+func Int16CheckOver(value, delta int16) bool {
+	if delta > 0 && value > math.MaxInt16-delta {
+		return true
+	}
+	if delta < 0 && value < math.MinInt16-delta {
+		return true
+	}
+	return false
+}
+
+func Int32CheckOver(value, delta int32) bool {
+	if delta > 0 && value > math.MaxInt32-delta {
+		return true
+	}
+	if delta < 0 && value < math.MinInt32-delta {
+		return true
+	}
+	return false
+}
+
+func Int64CheckOver(value, delta int64) bool {
+	if delta > 0 && value > math.MaxInt64-delta {
+		return true
+	}
+	if delta < 0 && value < math.MinInt64-delta {
+		return true
+	}
+	return false
+}
+
+func UInt16CheckOverFlow(value, delta uint16) bool {
+	return value > math.MaxUint16-delta
+}
+
+func UInt32CheckOverFlow(value, delta uint32) bool {
+	return value > math.MaxUint32-delta
+}
+
+func UInt64CheckOverFlow(value, delta uint64) bool {
+	return value > math.MaxUint64-delta
+}
+
+func Float32CheckOver(value, delta float32) bool {
+	if delta > 0 && value > math.MaxFloat32-delta {
+		return true
+	}
+	if delta < 0 && value < math.SmallestNonzeroFloat32-delta {
+		return true
+	}
+	return false
+}
+
+func Float64CheckOver(value, delta float64) bool {
+	if delta > 0 && value > math.MaxFloat64-delta {
+		return true
+	}
+	if delta < 0 && value < math.SmallestNonzeroFloat64-delta {
+		return true
+	}
+	return false
+}
+
 func Binary2Int16(data []byte) (int16, error) {
 	if ui, err := Binary2UInt16(data); err != nil {
 		return 0, err
@@ -105,4 +167,3 @@ func Binary2Float64(data []byte) (float64, error) {
 func Float64toBinary(value float64) []byte {
 	return UInt64toBinary(math.Float64bits(value))
 }
-
