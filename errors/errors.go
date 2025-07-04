@@ -5,16 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/found-cake/CacheStore/utils/generic"
 	"github.com/found-cake/CacheStore/utils/types"
 )
-
-type unsigned interface {
-	~uint16 | ~uint32 | ~uint64
-}
-
-type numberic interface {
-	~int16 | ~int32 | ~int64 | ~float32 | ~float64 | unsigned
-}
 
 var (
 	ErrKeyEmpty            = errors.New("key cannot be empty")
@@ -24,6 +17,7 @@ var (
 	ErrAlreadySave         = errors.New("save operation already in progress")
 	ErrDirtyThresholdCount = errors.New("DirtyThresholdCount is greater than '0'")
 	ErrDirtyThresholdRatio = errors.New("DirtyThresholdRatio is '0 ~ 1'")
+	ErrFloatSpecial        = errors.New("Invalid Error: result is Nan(Not a Number) or Infinity")
 )
 
 func ErrInvalidDataLength(expected, actual int) error {
@@ -39,10 +33,10 @@ func ErrTypeMismatch(key string, expected, actual types.DataType) error {
 		key, expected.String(), actual.String())
 }
 
-func ErrUnsignedUnderflow[T unsigned](key string, current, delta T) error {
+func ErrUnsignedUnderflow[T generic.Unsigned](key string, current, delta T) error {
 	return fmt.Errorf("unsigned integer underflow for key '%s': current value %v is less than delta %v", key, current, delta)
 }
 
-func ErrValueOverflow[T numberic](key string, data_type types.DataType, current, delta T) error {
+func ErrValueOverflow[T generic.Numberic](key string, data_type types.DataType, current, delta T) error {
 	return fmt.Errorf("%s overflow for key '%s': %v + %v exceeds representable range", strings.ToLower(data_type.String()), key, current, delta)
 }

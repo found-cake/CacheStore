@@ -7,6 +7,14 @@ import (
 	"github.com/found-cake/CacheStore/errors"
 )
 
+func CheckFloat32Special(value float32) bool {
+	return math.IsNaN(float64(value)) || math.IsInf(float64(value), 0)
+}
+
+func CheckFloat64Special(value float64) bool {
+	return math.IsNaN(value) || math.IsInf(value, 0)
+}
+
 func Int16CheckOver(value, delta int16) bool {
 	if delta > 0 && value > math.MaxInt16-delta {
 		return true
