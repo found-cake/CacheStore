@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/utils/generic"
 )
 
 func CheckFloat32Special(value float32) bool {
@@ -55,6 +56,10 @@ func UInt32CheckOverFlow(value, delta uint32) bool {
 
 func UInt64CheckOverFlow(value, delta uint64) bool {
 	return value > math.MaxUint64-delta
+}
+
+func UintCheckUnderFlow[T generic.Unsigned](value, delta T) bool {
+	return value < delta
 }
 
 func Float32CheckOver(value, delta float32) bool {

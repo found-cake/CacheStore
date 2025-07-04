@@ -5,6 +5,7 @@ import (
 
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/generic"
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
@@ -17,65 +18,22 @@ func (s *CacheStore) SetUInt16(key string, value uint16, exp time.Duration) erro
 }
 
 func (s *CacheStore) IncrUInt16(key string, delta uint16, exp time.Duration) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		data := utils.UInt16toBinary(delta)
-		s.unsafeSet(key, types.UINT16, data, exp)
-		return nil
-	}
-	if e.Type != types.UINT16 {
-		return errors.ErrTypeMismatch(key, types.UINT16, e.Type)
-	}
-	value, err := utils.Binary2UInt16(e.Data)
-	if err != nil {
-		return err
-	}
-	if utils.UInt16CheckOverFlow(value, delta) {
-		return errors.ErrValueOverflow(key, types.UINT16, value, delta)
-	}
-	value += delta
-	data := utils.UInt16toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, types.UINT16, data, exp)
-	} else {
-		s.setKeepExp(key, types.UINT16, data, e.Expiry)
-	}
-	return nil
+	return incrNumber(
+		s, key, delta, types.UINT16, exp,
+		utils.Binary2UInt16,
+		utils.UInt16toBinary,
+		utils.UInt16CheckOverFlow,
+		nil,
+	)
 }
 
 func (s *CacheStore) DecrUInt16(key string, delta uint16, exp time.Duration) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return errors.ErrNoDataForKey(key)
-	}
-	if e.Type != types.UINT16 {
-		return errors.ErrTypeMismatch(key, types.UINT16, e.Type)
-	}
-	value, err := utils.Binary2UInt16(e.Data)
-	if err != nil {
-		return err
-	}
-	if value < delta {
-		return errors.ErrUnsignedUnderflow(key, value, delta)
-	}
-	value -= delta
-	data := utils.UInt16toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, types.UINT16, data, exp)
-	} else {
-		s.setKeepExp(key, types.UINT16, data, e.Expiry)
-	}
-	return nil
+	return decrUnsigned(
+		s, key, delta, types.UINT16, exp,
+		utils.Binary2UInt16,
+		utils.UInt16toBinary,
+		utils.UintCheckUnderFlow,
+	)
 }
 
 func (s *CacheStore) GetUInt32(key string) (uint32, error) {
@@ -87,65 +45,22 @@ func (s *CacheStore) SetUInt32(key string, value uint32, exp time.Duration) erro
 }
 
 func (s *CacheStore) IncrUInt32(key string, delta uint32, exp time.Duration) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		data := utils.UInt32toBinary(delta)
-		s.unsafeSet(key, types.UINT32, data, exp)
-		return nil
-	}
-	if e.Type != types.UINT32 {
-		return errors.ErrTypeMismatch(key, types.UINT32, e.Type)
-	}
-	value, err := utils.Binary2UInt32(e.Data)
-	if err != nil {
-		return err
-	}
-	if utils.UInt32CheckOverFlow(value, delta) {
-		return errors.ErrValueOverflow(key, types.UINT32, value, delta)
-	}
-	value += delta
-	data := utils.UInt32toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, types.UINT32, data, exp)
-	} else {
-		s.setKeepExp(key, types.UINT32, data, e.Expiry)
-	}
-	return nil
+	return incrNumber(
+		s, key, delta, types.UINT32, exp,
+		utils.Binary2UInt32,
+		utils.UInt32toBinary,
+		utils.UInt32CheckOverFlow,
+		nil,
+	)
 }
 
 func (s *CacheStore) DecrUInt32(key string, delta uint32, exp time.Duration) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return errors.ErrNoDataForKey(key)
-	}
-	if e.Type != types.UINT32 {
-		return errors.ErrTypeMismatch(key, types.UINT32, e.Type)
-	}
-	value, err := utils.Binary2UInt32(e.Data)
-	if err != nil {
-		return err
-	}
-	if value < delta {
-		return errors.ErrUnsignedUnderflow(key, value, delta)
-	}
-	value -= delta
-	data := utils.UInt32toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, types.UINT32, data, exp)
-	} else {
-		s.setKeepExp(key, types.UINT32, data, e.Expiry)
-	}
-	return nil
+	return decrUnsigned(
+		s, key, delta, types.UINT32, exp,
+		utils.Binary2UInt32,
+		utils.UInt32toBinary,
+		utils.UintCheckUnderFlow,
+	)
 }
 
 func (s *CacheStore) GetUInt64(key string) (uint64, error) {
@@ -157,38 +72,28 @@ func (s *CacheStore) SetUInt64(key string, value uint64, exp time.Duration) erro
 }
 
 func (s *CacheStore) IncrUInt64(key string, delta uint64, exp time.Duration) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		data := utils.UInt64toBinary(delta)
-		s.unsafeSet(key, types.UINT64, data, exp)
-		return nil
-	}
-	if e.Type != types.UINT64 {
-		return errors.ErrTypeMismatch(key, types.UINT64, e.Type)
-	}
-	value, err := utils.Binary2UInt64(e.Data)
-	if err != nil {
-		return err
-	}
-	if utils.UInt64CheckOverFlow(value, delta) {
-		return errors.ErrValueOverflow(key, types.UINT64, value, delta)
-	}
-	value += delta
-	data := utils.UInt64toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, types.UINT64, data, exp)
-	} else {
-		s.setKeepExp(key, types.UINT64, data, e.Expiry)
-	}
-	return nil
+	return incrNumber(s, key, delta, types.UINT64, exp, utils.Binary2UInt64, utils.UInt64toBinary, utils.UInt64CheckOverFlow, nil)
 }
 
 func (s *CacheStore) DecrUInt64(key string, delta uint64, exp time.Duration) error {
+	return decrUnsigned(
+		s, key, delta, types.UINT64, exp,
+		utils.Binary2UInt64,
+		utils.UInt64toBinary,
+		utils.UintCheckUnderFlow,
+	)
+}
+
+func decrUnsigned[T generic.Unsigned](
+	s *CacheStore,
+	key string,
+	delta T,
+	data_type types.DataType,
+	exp time.Duration,
+	fromBinary func([]byte) (T, error),
+	toBinary func(T) []byte,
+	checkUnderflow func(T, T) bool,
+) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
@@ -198,22 +103,22 @@ func (s *CacheStore) DecrUInt64(key string, delta uint64, exp time.Duration) err
 	if err != nil {
 		return errors.ErrNoDataForKey(key)
 	}
-	if e.Type != types.UINT64 {
-		return errors.ErrTypeMismatch(key, types.UINT64, e.Type)
+	if e.Type != data_type {
+		return errors.ErrTypeMismatch(key, data_type, e.Type)
 	}
-	value, err := utils.Binary2UInt64(e.Data)
+	value, err := fromBinary(e.Data)
 	if err != nil {
 		return err
 	}
-	if value < delta {
+	if checkUnderflow(value, delta) {
 		return errors.ErrUnsignedUnderflow(key, value, delta)
 	}
 	value -= delta
-	data := utils.UInt64toBinary(value)
+	data := toBinary(value)
 	if exp > 0 {
-		s.unsafeSet(key, types.UINT64, data, exp)
+		s.unsafeSet(key, data_type, data, exp)
 	} else {
-		s.setKeepExp(key, types.UINT64, data, e.Expiry)
+		s.setKeepExp(key, data_type, data, e.Expiry)
 	}
 	return nil
 }
