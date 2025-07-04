@@ -1,69 +1,115 @@
 package store
 
 import (
-	"encoding/binary"
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/generic"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
+func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry uint32) {
+	s.memorydb[key] = entry.Entry{
+		Type:   dataType,
+		Data:   value,
+		Expiry: expiry,
+	}
+	if s.dirty != nil {
+		s.dirty.set(key)
+	}
+}
+
 func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	if len(data) != 2 {
-		return 0, errors.ErrInvalidDataLength(2, len(data))
-	}
-	return binary.LittleEndian.Uint16(data), nil
-}
-
-func (s *CacheStore) setNum16(key string, dataType types.DataType, value uint16, exp time.Duration) error {
-	buffer := make([]byte, 2)
-	binary.LittleEndian.PutUint16(buffer, value)
-	return s.Set(key, dataType, buffer, exp)
+	return utils.Binary2UInt16(e.Data)
 }
 
 func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	if len(data) != 4 {
-		return 0, errors.ErrInvalidDataLength(4, len(data))
-	}
-	return binary.LittleEndian.Uint32(data), nil
-}
-
-func (s *CacheStore) setNum32(key string, dataType types.DataType, value uint32, exp time.Duration) error {
-	buffer := make([]byte, 4)
-	binary.LittleEndian.PutUint32(buffer, value)
-	return s.Set(key, dataType, buffer, exp)
+	return utils.Binary2UInt32(e.Data)
 }
 
 func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return 0, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
 	}
-	if t != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, t)
+	if e.Type != expected {
+		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
 	}
-	if len(data) != 8 {
-		return 0, errors.ErrInvalidDataLength(8, len(data))
-	}
-	return binary.LittleEndian.Uint64(data), nil
+	return utils.Binary2UInt64(e.Data)
 }
 
-func (s *CacheStore) setNum64(key string, dataType types.DataType, value uint64, exp time.Duration) error {
-	buffer := make([]byte, 8)
-	binary.LittleEndian.PutUint64(buffer, value)
-	return s.Set(key, dataType, buffer, exp)
+func incrNumber[T generic.Numberic](
+	s *CacheStore,
+	key string,
+	delta T,
+	data_type types.DataType,
+	exp time.Duration,
+	fromBinary func([]byte) (T, error),
+	toBinary func(T) []byte,
+	checkOverFlow func(T, T) bool,
+	checkFloatSpesial func(T) bool,
+) error {
+	if key == "" {
+		return errors.ErrKeyEmpty
+	}
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	e, err := s.unsafeGet(key)
+	if err != nil {
+		data := toBinary(delta)
+		s.unsafeSet(key, data_type, data, exp)
+		return nil
+	}
+	if e.Type != data_type {
+		return errors.ErrTypeMismatch(key, data_type, e.Type)
+	}
+	value, err := fromBinary(e.Data)
+	if err != nil {
+		return err
+	}
+	if checkOverFlow(value, delta) {
+		return errors.ErrValueOverflow(key, data_type, value, delta)
+	}
+	value += delta
+	data := toBinary(value)
+	if checkFloatSpesial != nil && checkFloatSpesial(value) {
+		return errors.ErrFloatSpecial
+	}
+	if exp > 0 {
+		s.unsafeSet(key, data_type, data, exp)
+	} else {
+		s.setKeepExp(key, data_type, data, e.Expiry)
+	}
+	return nil
 }

@@ -3,7 +3,7 @@ package entry
 import (
 	"time"
 
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type Entry struct {

@@ -4,7 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/found-cake/CacheStore/store/types"
+	"github.com/found-cake/CacheStore/utils"
+	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetFloat32(key string) (float32, error) {
@@ -16,8 +17,17 @@ func (s *CacheStore) GetFloat32(key string) (float32, error) {
 }
 
 func (s *CacheStore) SetFloat32(key string, value float32, exp time.Duration) error {
-	bits := math.Float32bits(value)
-	return s.setNum32(key, types.FLOAT32, bits, exp)
+	return s.Set(key, types.FLOAT32, utils.Float32toBinary(value), exp)
+}
+
+func (s *CacheStore) IncrFloat32(key string, delta float32, exp time.Duration) error {
+	return incrNumber(
+		s, key, delta, types.FLOAT32, exp,
+		utils.Binary2Float32,
+		utils.Float32toBinary,
+		utils.Float32CheckOver,
+		utils.CheckFloat32Special,
+	)
 }
 
 func (s *CacheStore) GetFloat64(key string) (float64, error) {
@@ -29,6 +39,15 @@ func (s *CacheStore) GetFloat64(key string) (float64, error) {
 }
 
 func (s *CacheStore) SetFloat64(key string, value float64, exp time.Duration) error {
-	bits := math.Float64bits(value)
-	return s.setNum64(key, types.FLOAT64, bits, exp)
+	return s.Set(key, types.FLOAT64, utils.Float64toBinary(value), exp)
+}
+
+func (s *CacheStore) IncrFloat64(key string, delta float64, exp time.Duration) error {
+	return incrNumber(
+		s, key, delta, types.FLOAT64, exp,
+		utils.Binary2Float64,
+		utils.Float64toBinary,
+		utils.Float64CheckOver,
+		utils.CheckFloat64Special,
+	)
 }
