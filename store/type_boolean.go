@@ -8,14 +8,19 @@ import (
 )
 
 func (s *CacheStore) GetBool(key string) (bool, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return false, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return false, err
 	}
-	if t != types.BOOLEAN {
-		return false, errors.ErrTypeMismatch(key, types.BOOLEAN, t)
+	if e.Type != types.BOOLEAN {
+		return false, errors.ErrTypeMismatch(key, types.BOOLEAN, e.Type)
 	}
-	return len(data) > 0 && data[0] == 1, nil
+	return len(e.Data) > 0 && e.Data[0] == 1, nil
 }
 
 func (s *CacheStore) SetBool(key string, value bool, exp time.Duration) error {

@@ -8,14 +8,19 @@ import (
 )
 
 func (s *CacheStore) GetString(key string) (string, error) {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return "", errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return "", err
 	}
-	if t != types.STRING {
-		return "", errors.ErrTypeMismatch(key, types.STRING, t)
+	if e.Type != types.STRING {
+		return "", errors.ErrTypeMismatch(key, types.STRING, e.Type)
 	}
-	return string(data), nil
+	return string(e.Data), nil
 }
 
 func (s *CacheStore) SetString(key string, value string, exp time.Duration) error {

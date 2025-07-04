@@ -9,17 +9,22 @@ import (
 )
 
 func (s *CacheStore) GetJSON(key string, target interface{}) error {
-	t, data, err := s.Get(key)
+	if key == "" {
+		return errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return err
 	}
-	if t != types.JSON {
-		return errors.ErrTypeMismatch(key, types.JSON, t)
+	if e.Type != types.JSON {
+		return errors.ErrTypeMismatch(key, types.JSON, e.Type)
 	}
-	if len(data) == 0 {
+	if len(e.Data) == 0 {
 		return errors.ErrNoDataForKey(key)
 	}
-	return json.Unmarshal(data, target)
+	return json.Unmarshal(e.Data, target)
 }
 
 func (s *CacheStore) SetJSON(key string, value interface{}, exp time.Duration) error {

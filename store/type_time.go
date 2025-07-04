@@ -9,17 +9,22 @@ import (
 
 func (s *CacheStore) GetTime(key string) (time.Time, error) {
 	var t time.Time
-	dt, data, err := s.Get(key)
+	if key == "" {
+		return t, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
 	if err != nil {
 		return t, err
 	}
-	if dt != types.TIME {
-		return t, errors.ErrTypeMismatch(key, types.TIME, dt)
+	if e.Type != types.TIME {
+		return t, errors.ErrTypeMismatch(key, types.TIME, e.Type)
 	}
-	if len(data) == 0 {
+	if len(e.Data) == 0 {
 		return t, errors.ErrNoDataForKey(key)
 	}
-	err = t.UnmarshalBinary(data)
+	err = t.UnmarshalBinary(e.Data)
 	return t, err
 }
 
