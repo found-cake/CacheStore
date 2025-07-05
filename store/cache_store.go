@@ -1,6 +1,8 @@
 package store
 
 import (
+	"time"
+
 	"github.com/found-cake/CacheStore/config"
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
@@ -31,16 +33,39 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 				return nil, errors.ErrDirtyThresholdRatio
 			}
 			store.dirty = newDirtyManager(cfg.DirtyThresholdCount, cfg.DirtyThresholdRatio)
+			if cfg.DBSaveInterval > 0 {
+				store.wg.Add(1)
+				go func() {
+					defer store.wg.Done()
+					ticker := time.NewTicker(cfg.DBSaveInterval)
+					defer ticker.Stop()
+					for {
+						select {
+						case <-ticker.C:
+							store.Sync()
+						case <-store.done:
+							return
+						}
+					}
+				}()
+			}
 		}
-	} else {
-		cfg.DBSaveInterval = 0
 	}
 
-	if intervalFunc := store.createTicker(cfg.GCInterval, cfg.DBSaveInterval); intervalFunc != nil {
+	if cfg.GCInterval > 0 {
 		store.wg.Add(1)
 		go func() {
 			defer store.wg.Done()
-			intervalFunc()
+			ticker := time.NewTicker(cfg.GCInterval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					store.cleanExpired()
+				case <-store.done:
+					return
+				}
+			}
 		}()
 	}
 

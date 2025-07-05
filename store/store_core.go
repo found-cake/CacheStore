@@ -27,59 +27,6 @@ const (
 	TTLExpired  time.Duration = -2 // Key does not exist or is expired
 )
 
-func (s *CacheStore) createTicker(gcInterval time.Duration, saveInterval time.Duration) func() {
-	if gcInterval > 0 && saveInterval > 0 {
-		return func() {
-			gcticker := time.NewTicker(gcInterval)
-			dbticker := time.NewTicker(saveInterval)
-			defer gcticker.Stop()
-			defer dbticker.Stop()
-
-			for {
-				select {
-				case <-gcticker.C:
-					s.cleanExpired()
-				case <-dbticker.C:
-					s.Sync()
-				case <-s.done:
-					return
-				}
-			}
-		}
-	}
-	if gcInterval > 0 {
-		return func() {
-			gcticker := time.NewTicker(gcInterval)
-			defer gcticker.Stop()
-
-			for {
-				select {
-				case <-gcticker.C:
-					s.cleanExpired()
-				case <-s.done:
-					return
-				}
-			}
-		}
-	}
-	if saveInterval > 0 {
-		return func() {
-			dbticker := time.NewTicker(saveInterval)
-			defer dbticker.Stop()
-
-			for {
-				select {
-				case <-dbticker.C:
-					s.Sync()
-				case <-s.done:
-					return
-				}
-			}
-		}
-	}
-	return nil
-}
-
 func (s *CacheStore) cleanExpired() {
 	now := uint32(time.Now().Unix())
 
