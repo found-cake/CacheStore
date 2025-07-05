@@ -17,31 +17,31 @@ func CheckFloat64Special(value float64) bool {
 }
 
 func Int16CheckOver(value, delta int16) bool {
-	if delta > 0 && value > math.MaxInt16-delta {
-		return true
+	if delta > 0 {
+		return value > math.MaxInt16-delta
 	}
-	if delta < 0 && value < math.MinInt16-delta {
-		return true
+	if delta < 0 {
+		return value < math.MinInt16-delta
 	}
 	return false
 }
 
 func Int32CheckOver(value, delta int32) bool {
-	if delta > 0 && value > math.MaxInt32-delta {
-		return true
+	if delta > 0 {
+		return value > math.MaxInt32-delta
 	}
-	if delta < 0 && value < math.MinInt32-delta {
-		return true
+	if delta < 0 {
+		return value < math.MinInt32-delta
 	}
 	return false
 }
 
 func Int64CheckOver(value, delta int64) bool {
-	if delta > 0 && value > math.MaxInt64-delta {
-		return true
+	if delta > 0 {
+		return value > math.MaxInt64-delta
 	}
-	if delta < 0 && value < math.MinInt64-delta {
-		return true
+	if delta < 0 {
+		return value < math.MinInt64-delta
 	}
 	return false
 }
@@ -63,21 +63,21 @@ func UintCheckUnderFlow[T generic.Unsigned](value, delta T) bool {
 }
 
 func Float32CheckOver(value, delta float32) bool {
-	if delta > 0 && value > math.MaxFloat32-delta {
-		return true
+	if delta > 0 {
+		return value > math.MaxFloat32-delta
 	}
-	if delta < 0 && value < math.SmallestNonzeroFloat32-delta {
-		return true
+	if delta < 0 {
+		return value < -math.MaxFloat32-delta
 	}
 	return false
 }
 
 func Float64CheckOver(value, delta float64) bool {
-	if delta > 0 && value > math.MaxFloat64-delta {
-		return true
+	if delta > 0 {
+		return value > math.MaxFloat64-delta
 	}
-	if delta < 0 && value < math.SmallestNonzeroFloat64-delta {
-		return true
+	if delta < 0 {
+		return value < -math.MaxFloat64-delta
 	}
 	return false
 }
