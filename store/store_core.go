@@ -67,6 +67,20 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	return v.Type, result, nil
 }
 
+func (s *CacheStore) GetNoCopy(key string) (types.DataType, []byte, error) {
+	if key == "" {
+		return types.UNKNOWN, nil, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	v, err := s.unsafeGet(key)
+	if err != nil {
+		return types.UNKNOWN, nil, err
+	}
+
+	return v.Type, v.Data, nil
+}
+
 func (s *CacheStore) unsafeSet(key string, dataType types.DataType, value []byte, expiry time.Duration) {
 	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
 

@@ -23,8 +23,25 @@ func (s *CacheStore) GetRaw(key string) ([]byte, error) {
 
 	result := make([]byte, len(e.Data))
 	copy(result, e.Data)
-	
+
 	return result, nil
+}
+
+func (s *CacheStore) GetRawNoCopy(key string) ([]byte, error) {
+	if key == "" {
+		return nil, errors.ErrKeyEmpty
+	}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	e, err := s.unsafeGet(key)
+	if err != nil {
+		return nil, err
+	}
+	if e.Type != types.RAW {
+		return nil, errors.ErrTypeMismatch(key, types.RAW, e.Type)
+	}
+
+	return e.Data, nil
 }
 
 func (s *CacheStore) SetRaw(key string, value []byte, exp time.Duration) error {
