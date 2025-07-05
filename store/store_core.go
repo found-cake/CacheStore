@@ -28,7 +28,7 @@ const (
 )
 
 func (s *CacheStore) cleanExpired() {
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -164,7 +164,7 @@ func (s *CacheStore) Close() error {
 }
 
 func (s *CacheStore) Exists(keys ...string) int {
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 	count := 0
 
 	s.mux.RLock()
@@ -181,7 +181,7 @@ func (s *CacheStore) Exists(keys ...string) int {
 }
 
 func (s *CacheStore) Keys() []string {
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 	s.mux.RLock()
 	defer s.mux.RUnlock()
 
@@ -207,7 +207,7 @@ func (s *CacheStore) TTL(key string) time.Duration {
 		return TTLNoExpiry
 	}
 
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 	if now >= e.Expiry {
 		return TTLExpired
 	}

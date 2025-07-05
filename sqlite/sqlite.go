@@ -64,12 +64,12 @@ func (s *SqliteStore) LoadFromDB() (map[string]entry.Entry, error) {
 	defer rows.Close()
 
 	dbData := make(map[string]entry.Entry)
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 	for rows.Next() {
 		var key string
 		var dataType types.DataType
 		var data []byte
-		var expiry uint32
+		var expiry int64
 
 		if err := rows.Scan(&key, &dataType, &data, &expiry); err != nil {
 			log.Println(err)
@@ -130,7 +130,7 @@ func (s *SqliteStore) SaveDirtyData(set_dirtys map[string]entry.Entry, delete_di
 	}
 	defer deleteStmt.Close()
 
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 
 	for key, entry := range set_dirtys {
 		if entry.IsExpiredWithTime(now) {
@@ -179,7 +179,7 @@ func (s *SqliteStore) Save(data map[string]entry.Entry, force bool) error {
 	}
 	defer stmt.Close()
 
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 
 	for key, entry := range data {
 		if entry.IsExpiredWithTime(now) {

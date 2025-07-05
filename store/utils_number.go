@@ -10,7 +10,7 @@ import (
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
-func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry uint32) {
+func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry int64) {
 	s.memorydb[key] = entry.Entry{
 		Type:   dataType,
 		Data:   value,

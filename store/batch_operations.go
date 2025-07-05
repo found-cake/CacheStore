@@ -37,7 +37,7 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 	}
 
 	results := make([]BatchResult, len(keys))
-	now := uint32(time.Now().Unix())
+	now := time.Now().Unix()
 
 	s.mux.RLock()
 	defer s.mux.RUnlock()
