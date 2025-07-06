@@ -9,7 +9,8 @@ import (
 )
 
 func CheckFloat32Special(value float32) bool {
-	return math.IsNaN(float64(value)) || math.IsInf(float64(value), 0)
+	value64 := float64(value)
+	return CheckFloat64Special(value64)
 }
 
 func CheckFloat64Special(value float64) bool {
