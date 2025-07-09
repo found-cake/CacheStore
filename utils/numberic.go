@@ -65,20 +65,20 @@ func UintCheckUnderFlow[T generic.Unsigned](value, delta T) bool {
 
 func Float32CheckOver(value, delta float32) bool {
 	if delta > 0 {
-		return value > math.MaxFloat32-delta
+		return value > math.MaxFloat32-delta || (math.MaxFloat32-value) < delta
 	}
 	if delta < 0 {
-		return value < -math.MaxFloat32-delta
+		return value < -math.MaxFloat32-delta || (value+math.MaxFloat32) < -delta
 	}
 	return false
 }
 
 func Float64CheckOver(value, delta float64) bool {
 	if delta > 0 {
-		return value > math.MaxFloat64-delta
+		return value > math.MaxFloat64-delta || (math.MaxFloat64-value) < delta
 	}
 	if delta < 0 {
-		return value < -math.MaxFloat64-delta
+		return value < -math.MaxFloat64-delta || (value+math.MaxFloat64) < -delta
 	}
 	return false
 }
