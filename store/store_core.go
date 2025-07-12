@@ -67,6 +67,16 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	return v.Type, result, nil
 }
 
+// ⚠️  WARNING: GetNoCopy returns a reference to internal cache data.
+//
+// In contrast to the standard Get() method, which returns a **safe copy**,
+//
+// GetNoCopy is designed for performance-critical scenarios where copying is avoided.
+// However, modifying the returned value may cause unexpected behavior in concurrent environments.
+//
+// ✅ If you don't explicitly need zero-copy performance,
+//
+//	use Get() to avoid race conditions and data corruption.
 func (s *CacheStore) GetNoCopy(key string) (types.DataType, []byte, error) {
 	if key == "" {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
