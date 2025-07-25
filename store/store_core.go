@@ -139,7 +139,7 @@ func (s *CacheStore) Flush() {
 	s.memorydb = make(map[string]entry.Entry)
 	s.mux.Unlock()
 	if s.dirty != nil {
-		s.dirty.NeedFullSync()
+		s.dirty.wantFullSync()
 	}
 }
 

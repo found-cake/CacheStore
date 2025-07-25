@@ -77,7 +77,7 @@ func (d *dirtyManager) keys() ([]string, []string) {
 	return set_keys, delete_keys
 }
 
-func (d *dirtyManager) NeedFullSync() {
+func (d *dirtyManager) wantFullSync() {
 	d.mux.Lock()
 	defer d.mux.Unlock()
 
