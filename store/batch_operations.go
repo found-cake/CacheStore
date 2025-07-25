@@ -9,18 +9,18 @@ import (
 )
 
 type BatchItem struct {
-	Key    string
-	Type   types.DataType
-	Value  []byte
-	Expiry time.Duration
+	Key   string
+	Entry *entry.Entry
 }
 
-func NewItem(key string, dataType types.DataType, value []byte, expiry time.Duration) BatchItem {
+func NewItem(key string, dataType types.DataType, data []byte, expiry time.Duration) BatchItem {
+	if data == nil {
+		return BatchItem{Key: key}
+	}
+	entry := entry.NewEntry(dataType, data, expiry)
 	return BatchItem{
-		Key:    key,
-		Type:   dataType,
-		Value:  value,
-		Expiry: expiry,
+		Key:   key,
+		Entry: &entry,
 	}
 }
 
@@ -74,20 +74,24 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	s.dirty.mux.Lock()
-	defer s.dirty.mux.Unlock()
+	if s.dirty != nil {
+		s.dirty.mux.Lock()
+		defer s.dirty.mux.Unlock()
+	}
 
 	for i, item := range items {
 		if item.Key == "" {
 			errs[i] = errors.ErrKeyEmpty
 			continue
 		}
-		if item.Value == nil {
+		if item.Entry == nil {
 			errs[i] = errors.ErrValueNil
 			continue
 		}
-		s.memorydb[item.Key] = entry.NewEntry(item.Type, item.Value, item.Expiry)
-		s.dirty.unsafeSet(item.Key)
+		s.memorydb[item.Key] = *item.Entry
+		if s.dirty != nil {
+			s.dirty.unsafeSet(item.Key)
+		}
 	}
 
 	return errs
@@ -102,8 +106,10 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	s.dirty.mux.Lock()
-	defer s.dirty.mux.Unlock()
+	if s.dirty != nil {
+		s.dirty.mux.Lock()
+		defer s.dirty.mux.Unlock()
+	}
 
 	for i, key := range keys {
 		if key == "" {
@@ -112,7 +118,9 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 		}
 
 		delete(s.memorydb, key)
-		s.dirty.unsafeDelete(key)
+		if s.dirty != nil {
+			s.dirty.unsafeDelete(key)
+		}
 	}
 
 	return errs
