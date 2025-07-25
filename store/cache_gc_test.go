@@ -16,7 +16,7 @@ func TestCleanExpired(t *testing.T) {
 	defer store.Close()
 
 	key := "foo"
-	err = store.Set(key, types.RAW, []byte("bar"), time.Second)
+	err = store.Set(key, types.RAW, []byte("bar"), 100*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Set() error = %v", err)
 	}
@@ -26,7 +26,7 @@ func TestCleanExpired(t *testing.T) {
 		t.Errorf("Exists() = %v, want 1 for expired key", count)
 	}
 
-	time.Sleep(1100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	count = store.Exists(key)
 	if count != 0 {
@@ -48,7 +48,7 @@ func TestCleanExpired(t *testing.T) {
 func TestGarbageCollector(t *testing.T) {
 	store, err := NewCacheStore(config.Config{
 		DBSave:     false,
-		GCInterval: 1 * time.Second,
+		GCInterval: 500 * time.Millisecond,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create store: %v", err)
@@ -56,7 +56,7 @@ func TestGarbageCollector(t *testing.T) {
 	defer store.Close()
 
 	key := "foo"
-	err = store.Set(key, types.RAW, []byte("bar"), time.Second)
+	err = store.Set(key, types.RAW, []byte("bar"), 100*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Set() error = %v", err)
 	}

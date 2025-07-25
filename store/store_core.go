@@ -28,13 +28,13 @@ const (
 )
 
 func (s *CacheStore) cleanExpired() {
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	for key, entry := range s.memorydb {
-		if entry.IsExpiredWithTime(now) {
+		if entry.IsExpiredWithUnixMilli(now) {
 			delete(s.memorydb, key)
 		}
 	}
@@ -174,7 +174,7 @@ func (s *CacheStore) Close() error {
 }
 
 func (s *CacheStore) Exists(keys ...string) int {
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	count := 0
 
 	s.mux.RLock()
@@ -182,7 +182,7 @@ func (s *CacheStore) Exists(keys ...string) int {
 
 	for _, key := range keys {
 		if e, ok := s.memorydb[key]; ok {
-			if !e.IsExpiredWithTime(now) {
+			if !e.IsExpiredWithUnixMilli(now) {
 				count++
 			}
 		}
@@ -191,13 +191,13 @@ func (s *CacheStore) Exists(keys ...string) int {
 }
 
 func (s *CacheStore) Keys() []string {
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	s.mux.RLock()
 	defer s.mux.RUnlock()
 
 	keys := make([]string, 0, len(s.memorydb))
 	for key, e := range s.memorydb {
-		if !e.IsExpiredWithTime(now) {
+		if !e.IsExpiredWithUnixMilli(now) {
 			keys = append(keys, key)
 		}
 	}
@@ -217,12 +217,12 @@ func (s *CacheStore) TTL(key string) time.Duration {
 		return TTLNoExpiry
 	}
 
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	if now >= e.Expiry {
 		return TTLExpired
 	}
 
-	remaining := time.Duration(e.Expiry-now) * time.Second
+	remaining := time.Duration(e.Expiry-now) * time.Millisecond
 	return remaining
 }
 

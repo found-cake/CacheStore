@@ -33,27 +33,27 @@ func TestNewEntry_NoExpiry(t *testing.T) {
 }
 
 func TestIsExpired(t *testing.T) {
-	entry := NewEntry(types.RAW, []byte("test"), 1*time.Second)
+	entry := NewEntry(types.RAW, []byte("test"), 100*time.Millisecond)
 	if entry.IsExpired() {
 		t.Error("entry should not be expired immediately after creation")
 	}
-	time.Sleep(1100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	if !entry.IsExpired() {
 		t.Error("entry should be expired after duration")
 	}
 }
 
 func TestIsExpiredWithTime(t *testing.T) {
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 	entry := Entry{
 		Type:   types.STRING,
 		Data:   []byte("test"),
 		Expiry: now + 1,
 	}
-	if entry.IsExpiredWithTime(now) {
+	if entry.IsExpiredWithUnixMilli(now) {
 		t.Error("should not be expired at current time")
 	}
-	if !entry.IsExpiredWithTime(now + 2) {
+	if !entry.IsExpiredWithUnixMilli(now + 2) {
 		t.Error("should be expired after expiry")
 	}
 }

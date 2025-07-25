@@ -13,17 +13,17 @@ type Entry struct {
 }
 
 func (e Entry) IsExpired() bool {
-	return e.Expiry > 0 && e.Expiry <= time.Now().Unix()
+	return e.IsExpiredWithUnixMilli(time.Now().UnixMilli())
 }
 
-func (e Entry) IsExpiredWithTime(now int64) bool {
+func (e Entry) IsExpiredWithUnixMilli(now int64) bool {
 	return e.Expiry > 0 && e.Expiry <= now
 }
 
 func NewEntry(dataType types.DataType, data []byte, exp time.Duration) Entry {
 	var expiry int64
 	if exp > 0 {
-		expiry = time.Now().Add(exp).Unix()
+		expiry = time.Now().Add(exp).UnixMilli()
 	}
 	return Entry{
 		Type:   dataType,

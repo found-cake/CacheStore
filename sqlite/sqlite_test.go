@@ -170,13 +170,13 @@ func TestSqliteStore_Load_FilterExpired(t *testing.T) {
 		t.Fatalf("failed to create store: %v", err)
 	}
 	data := map[string]entry.Entry{
-		"foo": entry.NewEntry(types.RAW, []byte("bar"), 1*time.Second),
+		"foo": entry.NewEntry(types.RAW, []byte("bar"), 100*time.Millisecond),
 	}
 	err = store.Save(data, true)
 	if err != nil {
 		t.Errorf("force lock Save failed: %v", err)
 	}
-	time.Sleep(1100 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	loaded, err := store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)

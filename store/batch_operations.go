@@ -37,7 +37,7 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 	}
 
 	results := make([]BatchResult, len(keys))
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 
 	s.mux.RLock()
 	defer s.mux.RUnlock()
@@ -49,7 +49,7 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 			continue
 		}
 		if e, ok := s.memorydb[key]; ok {
-			if !e.IsExpiredWithTime(now) {
+			if !e.IsExpiredWithUnixMilli(now) {
 				cData := make([]byte, len(e.Data))
 				copy(cData, e.Data)
 				results[i].Type = e.Type
