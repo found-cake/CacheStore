@@ -1,12 +1,10 @@
-# 🚀 CacheStore
-
-**High-performance in-memory cache system with SQLite persistence support**
-
-CacheStore is a thread-safe cache library written in Go, providing blazing-fast memory access and reliable SQLite-based data persistence.
+# CacheStore
 
 [![Go Test](https://github.com/found-cake/CacheStore/actions/workflows/gotest.yml/badge.svg)](https://github.com/found-cake/CacheStore/actions/workflows/gotest.yml)
 [![Go Version](https://img.shields.io/badge/go-1.22%2B-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+> CacheStore is a thread-safe cache library written in Go, providing blazing-fast memory access and reliable SQLite-based data persistence.
 
 ## ✨ Features
 
@@ -63,32 +61,6 @@ func main() {
     
     fmt.Printf("Type: %v, Value: %s\n", dataType, string(value))
 }
-```
-
-### Handling JSON Data
-
-```go
-type User struct {
-    Name string `json:"name"`
-    Age  int    `json:"age"`
-}
-
-user := User{Name: "Bob", Age: 30}
-
-// Set JSON
-err := cacheStore.SetJSON("user:456", user, time.Hour)
-if err != nil {
-    panic(err)
-}
-
-// Get JSON
-var retrievedUser User
-err = cacheStore.GetJSON("user:456", &retrievedUser)
-if err != nil {
-    panic(err)
-}
-
-fmt.Printf("User: %+v\n", retrievedUser)
 ```
 
 ### Batch Operations
@@ -150,43 +122,18 @@ cacheStore, err := store.NewCacheStore(cfg)
 | `DirtyThresholdCount`  | Full sync trigger count             | 50         |
 | `DirtyThresholdRatio`  | Full sync trigger ratio             | 0.2        |
 
-## 🔧 Supported Data Types
+## 🔧 Supported Types & Methods
 
-### String
-```go
-err := cacheStore.Set("key", types.STRING, []byte("hello"), time.Hour)
-dataType, value, err := cacheStore.Get("key")
-```
-
-### JSON
-```go
-err := cacheStore.SetJSON("user", map[string]interface{}{"name": "Alice"}, time.Hour)
-var user map[string]interface{}
-err = cacheStore.GetJSON("user", &user)
-```
-
-### Boolean
-```go
-err := cacheStore.SetBool("flag", true, time.Hour)
-value, err := cacheStore.GetBool("flag")
-```
-
-### Integer (16/32/64bit)
-```go
-// Int64 example
-err := cacheStore.SetInt64("counter", 100, time.Hour)
-value, err := cacheStore.GetInt64("counter")
-
-// Increment
-err = cacheStore.IncrInt64("counter", 5, time.Hour) // Now 105
-```
-
-### Time
-```go
-now := time.Now()
-err := cacheStore.SetTime("timestamp", now, time.Hour)
-retrievedTime, err := cacheStore.GetTime("timestamp")
-```
+| **Type**           | **Set Method**              | **Get Method**              |
+|--------------------|-----------------------------|-----------------------------|
+| Raw                | `SetRaw`                    | `GetRaw`                    |
+| String             | `SetString`                 | `GetString`                 |
+| Boolean            | `SetBool`                   | `GetBool`                   |
+| Integer            | `SetInt16, SetInt32, ...`   | `GetInt16, GetInt32, ...`   |
+| Unsigned Integer   | `SetUint16, SetUint32, ...` | `GetUint16, GetUint32, ...` |
+| Float              | `SetFloat32, SetFloat64`    | `GetFloat32, GetFloat64`    |
+| Time               | `SetTime`                   | `GetTime`                   |
+| JSON               | `SetJSON`                   | `GetJSON(key, &target)`     |
 
 ## 🎯 Advanced Features
 
