@@ -233,6 +233,16 @@ dataType, value, err := cacheStore.GetNoCopy("key")
 // Only read from value!
 ```
 
+## 🧪 Testing
+
+```bash
+# Coverage
+go test -cover ./...
+
+# Benchmark
+go test -bench=. -benchmem ./store
+```
+
 ---
 
 ⭐ If you find this project helpful, please give it a star!
