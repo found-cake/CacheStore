@@ -97,8 +97,8 @@ func decrUnsigned[T generic.Unsigned](
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
+	s.temporaryMux.Lock()
+	defer s.temporaryMux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return errors.ErrNoDataForKey(key)

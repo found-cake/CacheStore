@@ -11,7 +11,7 @@ import (
 )
 
 func (s *CacheStore) setKeepExp(key string, dataType types.DataType, value []byte, expiry int64) {
-	s.memorydb[key] = entry.Entry{
+	s.memorydbTemporary[key] = entry.Entry{
 		Type:   dataType,
 		Data:   value,
 		Expiry: expiry,
@@ -25,8 +25,8 @@ func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, erro
 	if key == "" {
 		return 0, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
@@ -41,8 +41,8 @@ func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, erro
 	if key == "" {
 		return 0, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
@@ -57,8 +57,8 @@ func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, erro
 	if key == "" {
 		return 0, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return 0, err
@@ -83,8 +83,8 @@ func incrNumber[T generic.Numberic](
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
+	s.temporaryMux.Lock()
+	defer s.temporaryMux.Unlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		data := toBinary(delta)

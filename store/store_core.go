@@ -13,13 +13,15 @@ import (
 )
 
 type CacheStore struct {
-	mux      sync.RWMutex
-	memorydb map[string]entry.Entry
-	dirty    *dirtyManager
-	sqlitedb *sqlite.SqliteStore
-	done     chan struct{}
-	wg       sync.WaitGroup
-	closed   atomic.Bool
+	persistentMux      sync.RWMutex
+	temporaryMux       sync.RWMutex
+	memorydbPersistent map[string]entry.Entry
+	memorydbTemporary  map[string]entry.Entry
+	dirty              *dirtyManager
+	sqlitedb           *sqlite.SqliteStore
+	done               chan struct{}
+	wg                 sync.WaitGroup
+	closed             atomic.Bool
 }
 
 const (
@@ -30,18 +32,18 @@ const (
 func (s *CacheStore) cleanExpired() {
 	now := time.Now().UnixMilli()
 
-	s.mux.Lock()
-	defer s.mux.Unlock()
+	s.temporaryMux.Lock()
+	defer s.temporaryMux.Unlock()
 
-	for key, entry := range s.memorydb {
+	for key, entry := range s.memorydbTemporary {
 		if entry.IsExpiredWithUnixMilli(now) {
-			delete(s.memorydb, key)
+			delete(s.memorydbTemporary, key)
 		}
 	}
 }
 
 func (s *CacheStore) unsafeGet(key string) (entry.Entry, error) {
-	v, ok := s.memorydb[key]
+	v, ok := s.memorydbTemporary[key]
 	if !ok {
 		return v, errors.ErrNoDataForKey(key)
 	}
@@ -55,8 +57,8 @@ func (s *CacheStore) Get(key string) (types.DataType, []byte, error) {
 	if key == "" {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	v, err := s.unsafeGet(key)
 	if err != nil {
 		return types.UNKNOWN, nil, err
@@ -81,8 +83,8 @@ func (s *CacheStore) GetNoCopy(key string) (types.DataType, []byte, error) {
 	if key == "" {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	v, err := s.unsafeGet(key)
 	if err != nil {
 		return types.UNKNOWN, nil, err
@@ -92,7 +94,7 @@ func (s *CacheStore) GetNoCopy(key string) (types.DataType, []byte, error) {
 }
 
 func (s *CacheStore) unsafeSet(key string, dataType types.DataType, value []byte, expiry time.Duration) {
-	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
+	s.memorydbTemporary[key] = entry.NewEntry(dataType, value, expiry)
 
 	if s.dirty != nil {
 		s.dirty.set(key)
@@ -107,9 +109,9 @@ func (s *CacheStore) Set(key string, dataType types.DataType, value []byte, expi
 		return errors.ErrValueNil
 	}
 
-	s.mux.Lock()
-	s.memorydb[key] = entry.NewEntry(dataType, value, expiry)
-	s.mux.Unlock()
+	s.temporaryMux.Lock()
+	s.memorydbTemporary[key] = entry.NewEntry(dataType, value, expiry)
+	s.temporaryMux.Unlock()
 
 	if s.dirty != nil {
 		s.dirty.set(key)
@@ -123,9 +125,9 @@ func (s *CacheStore) Delete(key string) error {
 		return errors.ErrKeyEmpty
 	}
 
-	s.mux.Lock()
-	delete(s.memorydb, key)
-	s.mux.Unlock()
+	s.temporaryMux.Lock()
+	delete(s.memorydbTemporary, key)
+	s.temporaryMux.Unlock()
 
 	if s.dirty != nil {
 		s.dirty.delete(key)
@@ -135,9 +137,9 @@ func (s *CacheStore) Delete(key string) error {
 }
 
 func (s *CacheStore) Flush() {
-	s.mux.Lock()
-	s.memorydb = make(map[string]entry.Entry)
-	s.mux.Unlock()
+	s.temporaryMux.Lock()
+	s.memorydbTemporary = make(map[string]entry.Entry)
+	s.temporaryMux.Unlock()
 	if s.dirty != nil {
 		s.dirty.wantFullSync()
 	}
@@ -164,10 +166,10 @@ func (s *CacheStore) Close() error {
 				log.Println(err)
 			}
 		}()
-		err = s.sqlitedb.Save(s.memorydb, true)
+		err = s.sqlitedb.Save(s.memorydbTemporary, true)
 	}
 
-	s.memorydb = nil
+	s.memorydbTemporary = nil
 	s.dirty = nil
 
 	return err
@@ -177,11 +179,11 @@ func (s *CacheStore) Exists(keys ...string) int {
 	now := time.Now().UnixMilli()
 	count := 0
 
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 
 	for _, key := range keys {
-		if e, ok := s.memorydb[key]; ok {
+		if e, ok := s.memorydbTemporary[key]; ok {
 			if !e.IsExpiredWithUnixMilli(now) {
 				count++
 			}
@@ -192,11 +194,11 @@ func (s *CacheStore) Exists(keys ...string) int {
 
 func (s *CacheStore) Keys() []string {
 	now := time.Now().UnixMilli()
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 
-	keys := make([]string, 0, len(s.memorydb))
-	for key, e := range s.memorydb {
+	keys := make([]string, 0, len(s.memorydbTemporary))
+	for key, e := range s.memorydbTemporary {
 		if !e.IsExpiredWithUnixMilli(now) {
 			keys = append(keys, key)
 		}
@@ -205,10 +207,10 @@ func (s *CacheStore) Keys() []string {
 }
 
 func (s *CacheStore) TTL(key string) time.Duration {
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 
-	e, ok := s.memorydb[key]
+	e, ok := s.memorydbTemporary[key]
 	if !ok {
 		return TTLExpired
 	}
@@ -249,9 +251,9 @@ func (s *CacheStore) Sync() {
 		return
 	}
 
-	s.mux.RLock()
-	if dirtySize > s.dirty.ThresholdCount && dirtySize > int(float64(len(s.memorydb))*s.dirty.ThresholdRatio) {
-		s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	if dirtySize > s.dirty.ThresholdCount && dirtySize > int(float64(len(s.memorydbTemporary))*s.dirty.ThresholdRatio) {
+		s.temporaryMux.RUnlock()
 		s.dirty.mux.Unlock()
 		s.FullSync()
 		return
@@ -260,7 +262,7 @@ func (s *CacheStore) Sync() {
 	set_keys, delete_keys := s.dirty.keys()
 	new_data := make(map[string]entry.Entry, len(set_keys))
 	for _, key := range set_keys {
-		if e, ok := s.memorydb[key]; ok {
+		if e, ok := s.memorydbTemporary[key]; ok {
 			dataCopy := make([]byte, len(e.Data))
 			copy(dataCopy, e.Data)
 
@@ -272,7 +274,7 @@ func (s *CacheStore) Sync() {
 		}
 	}
 
-	s.mux.RUnlock()
+	s.temporaryMux.RUnlock()
 	s.dirty.unsafeClear()
 	s.dirty.mux.Unlock()
 
@@ -290,9 +292,9 @@ func (s *CacheStore) FullSync() {
 		return
 	}
 
-	s.mux.RLock()
-	snapshot := make(map[string]entry.Entry, len(s.memorydb))
-	for key, e := range s.memorydb {
+	s.temporaryMux.RLock()
+	snapshot := make(map[string]entry.Entry, len(s.memorydbTemporary))
+	for key, e := range s.memorydbTemporary {
 		dataCopy := make([]byte, len(e.Data))
 		copy(dataCopy, e.Data)
 
@@ -302,7 +304,7 @@ func (s *CacheStore) FullSync() {
 			Expiry: e.Expiry,
 		}
 	}
-	s.mux.RUnlock()
+	s.temporaryMux.RUnlock()
 	if s.dirty != nil {
 		s.dirty.clear()
 	}

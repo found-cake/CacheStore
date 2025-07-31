@@ -225,7 +225,7 @@ func TestCacheStore_MSet(t *testing.T) {
 				if errs[i] == nil {
 					dataType, value, err := store.Get(item.Key)
 					if err != nil {
-						t.Errorf("Get() after MSet() error = %v  %v", err, store.memorydb)
+						t.Errorf("Get() after MSet() error = %v  %v", err, store.memorydbTemporary)
 						continue
 					}
 					if dataType != item.Entry.Type {

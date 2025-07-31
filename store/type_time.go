@@ -12,8 +12,8 @@ func (s *CacheStore) GetTime(key string) (time.Time, error) {
 	if key == "" {
 		return t, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return t, err

@@ -11,8 +11,8 @@ import (
 
 func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 	store := &CacheStore{
-		memorydb: make(map[string]entry.Entry),
-		done:     make(chan struct{}),
+		memorydbTemporary: make(map[string]entry.Entry),
+		done:              make(chan struct{}),
 	}
 	if cfg.DBSave {
 		sqlitedb, err := sqlite.NewSqliteStore(cfg.DBFileName)
@@ -23,7 +23,7 @@ func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 		if err != nil {
 			return nil, err
 		}
-		store.memorydb = data
+		store.memorydbTemporary = data
 		store.sqlitedb = sqlitedb
 		if cfg.SaveDirtyData {
 			if cfg.DirtyThresholdCount <= 0 {

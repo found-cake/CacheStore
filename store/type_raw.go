@@ -11,8 +11,8 @@ func (s *CacheStore) GetRaw(key string) ([]byte, error) {
 	if key == "" {
 		return nil, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return nil, err
@@ -31,8 +31,8 @@ func (s *CacheStore) GetRawNoCopy(key string) ([]byte, error) {
 	if key == "" {
 		return nil, errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return nil, err

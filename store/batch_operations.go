@@ -39,8 +39,8 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 	results := make([]BatchResult, len(keys))
 	now := time.Now().UnixMilli()
 
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 
 	for i, key := range keys {
 		results[i].Key = key
@@ -48,7 +48,7 @@ func (s *CacheStore) MGet(keys ...string) []BatchResult {
 			results[i].Error = errors.ErrKeyEmpty
 			continue
 		}
-		if e, ok := s.memorydb[key]; ok {
+		if e, ok := s.memorydbTemporary[key]; ok {
 			if !e.IsExpiredWithUnixMilli(now) {
 				cData := make([]byte, len(e.Data))
 				copy(cData, e.Data)
@@ -72,8 +72,8 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 
 	errs := make([]error, len(items))
 
-	s.mux.Lock()
-	defer s.mux.Unlock()
+	s.temporaryMux.Lock()
+	defer s.temporaryMux.Unlock()
 	if s.dirty != nil {
 		s.dirty.mux.Lock()
 		defer s.dirty.mux.Unlock()
@@ -88,7 +88,7 @@ func (s *CacheStore) MSet(items ...BatchItem) []error {
 			errs[i] = errors.ErrValueNil
 			continue
 		}
-		s.memorydb[item.Key] = *item.Entry
+		s.memorydbTemporary[item.Key] = *item.Entry
 		if s.dirty != nil {
 			s.dirty.unsafeSet(item.Key)
 		}
@@ -104,8 +104,8 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 
 	errs := make([]error, len(keys))
 
-	s.mux.Lock()
-	defer s.mux.Unlock()
+	s.temporaryMux.Lock()
+	defer s.temporaryMux.Unlock()
 	if s.dirty != nil {
 		s.dirty.mux.Lock()
 		defer s.dirty.mux.Unlock()
@@ -117,7 +117,7 @@ func (s *CacheStore) MDelete(keys ...string) []error {
 			continue
 		}
 
-		delete(s.memorydb, key)
+		delete(s.memorydbTemporary, key)
 		if s.dirty != nil {
 			s.dirty.unsafeDelete(key)
 		}

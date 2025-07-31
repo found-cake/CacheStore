@@ -11,8 +11,8 @@ func (s *CacheStore) GetString(key string) (string, error) {
 	if key == "" {
 		return "", errors.ErrKeyEmpty
 	}
-	s.mux.RLock()
-	defer s.mux.RUnlock()
+	s.temporaryMux.RLock()
+	defer s.temporaryMux.RUnlock()
 	e, err := s.unsafeGet(key)
 	if err != nil {
 		return "", err
