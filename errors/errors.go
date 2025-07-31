@@ -11,6 +11,8 @@ import (
 
 var (
 	ErrKeyEmpty            = errors.New("key cannot be empty")
+	ErrIsClosed            = errors.New("cache store is closed")
+	ErrAlreadyCommit       = errors.New("transaction already committed")
 	ErrValueNil            = errors.New("value cannot be null")
 	ErrDBNotInit           = errors.New("database not initialized")
 	ErrFileNameEmpty       = errors.New("filename cannot be empty")
