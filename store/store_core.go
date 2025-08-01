@@ -14,8 +14,8 @@ import (
 
 type CacheStore struct {
 	persistentMux      sync.RWMutex
-	temporaryMux       sync.RWMutex
 	memorydbPersistent map[string]entry.Entry
+	temporaryMux       sync.RWMutex
 	memorydbTemporary  map[string]entry.Entry
 	dirty              *dirtyManager
 	sqlitedb           *sqlite.SqliteStore
