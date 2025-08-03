@@ -118,13 +118,6 @@ func (tx *WriteTransaction) Delete(key string) error {
 }
 
 func newEntry(dataType types.DataType, data []byte, exp time.Duration) *entry.Entry {
-	var expiry int64
-	if exp > 0 {
-		expiry = time.Now().Add(exp).UnixMilli()
-	}
-	return &entry.Entry{
-		Type:   dataType,
-		Data:   data,
-		Expiry: expiry,
-	}
+	e := entry.NewEntry(dataType, data, exp)
+	return &e
 }
