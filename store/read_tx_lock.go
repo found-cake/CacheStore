@@ -9,24 +9,18 @@ import (
 
 type LockReadTransaction struct {
 	parent *CacheStore
-	locked bool
 }
 
 func (s *CacheStore) lockReadTx(fn ReadTransactionFunc) error {
 	tx := &LockReadTransaction{
 		parent: s,
-		locked: false,
 	}
 
 	s.persistentMux.RLock()
 	s.temporaryMux.RLock()
-	tx.locked = true
 	defer func() {
-		if tx.locked {
-			s.persistentMux.RUnlock()
-			s.temporaryMux.RUnlock()
-			tx.locked = false
-		}
+		s.persistentMux.RUnlock()
+		s.temporaryMux.RUnlock()
 	}()
 
 	return fn(tx)
@@ -34,7 +28,7 @@ func (s *CacheStore) lockReadTx(fn ReadTransactionFunc) error {
 
 func (tx *LockReadTransaction) Get(key string) (types.DataType, []byte, error) {
 	t, data, err := tx.GetNoCopy(key)
-	if err != nil {
+	if err == nil {
 		result := make([]byte, len(data))
 		copy(result, data)
 		return t, result, err
@@ -45,9 +39,6 @@ func (tx *LockReadTransaction) Get(key string) (types.DataType, []byte, error) {
 // GetNoCopy retrieves a value without copying data (zero-copy read)
 // ⚠️ WARNING: Don't modify the returned value!
 func (tx *LockReadTransaction) GetNoCopy(key string) (types.DataType, []byte, error) {
-	if !tx.locked {
-		return types.UNKNOWN, nil, errors.ErrNotLocked
-	}
 	if key == "" {
 		return types.UNKNOWN, nil, errors.ErrKeyEmpty
 	}
@@ -70,7 +61,7 @@ func (tx *LockReadTransaction) GetNoCopy(key string) (types.DataType, []byte, er
 }
 
 func (tx *LockReadTransaction) Exists(keys ...string) int {
-	if !tx.locked || len(keys) == 0 {
+	if len(keys) == 0 {
 		return 0
 	}
 
@@ -91,10 +82,6 @@ func (tx *LockReadTransaction) Exists(keys ...string) int {
 }
 
 func (tx *LockReadTransaction) TTL(key string) time.Duration {
-	if !tx.locked {
-		return TTLExpired
-	}
-
 	_, ok := tx.parent.memorydbPersistent[key]
 	if ok {
 		return TTLNoExpiry
