@@ -12,7 +12,7 @@ type SnapshotReadTransaction struct {
 	memorydb map[string]entry.Entry
 }
 
-func (s *CacheStore) snapshotReadTx(fn ReadTransactionFunc) error {
+func newSnapshotReadTX(s *CacheStore) *SnapshotReadTransaction {
 	s.persistentMux.RLock()
 	s.temporaryMux.RLock()
 
@@ -48,6 +48,11 @@ func (s *CacheStore) snapshotReadTx(fn ReadTransactionFunc) error {
 	s.persistentMux.RUnlock()
 	s.temporaryMux.RUnlock()
 
+	return tx
+}
+
+func (s *CacheStore) snapshotReadTx(fn ReadTransactionFunc) error {
+	tx := newSnapshotReadTX(s)
 	return fn(tx)
 }
 
