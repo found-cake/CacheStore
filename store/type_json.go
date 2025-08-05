@@ -19,7 +19,7 @@ func (s *CacheStore) GetJSON(key string, target interface{}) error {
 		return err
 	}
 	if e.Type != types.JSON {
-		return errors.ErrTypeMismatch(key, types.JSON, e.Type)
+		return errors.ErrTypeMismatch(types.JSON, e.Type)
 	}
 	if len(e.Data) == 0 {
 		return errors.ErrNoDataForKey(key)

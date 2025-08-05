@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrKeyEmpty            = errors.New("key cannot be empty")
+	ErrDataEmpty           = errors.New("data cannot be empty")
 	ErrIsClosed            = errors.New("cache store is closed")
 	ErrAlreadyCommit       = errors.New("transaction already committed")
 	ErrNotLocked           = errors.New("read transaction not locked")
@@ -31,9 +32,9 @@ func ErrNoDataForKey(key string) error {
 	return fmt.Errorf("no data found for key: %s", key)
 }
 
-func ErrTypeMismatch(key string, expected, actual types.DataType) error {
-	return fmt.Errorf("type mismatch for key '%s': expected %s, got %s",
-		key, expected.String(), actual.String())
+func ErrTypeMismatch(expected, actual types.DataType) error {
+	return fmt.Errorf("type mismatch: expected %s, got %s",
+		expected.String(), actual.String())
 }
 
 func ErrUnsignedUnderflow[T generic.Unsigned](key string, current, delta T) error {

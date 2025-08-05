@@ -104,7 +104,7 @@ func decrUnsigned[T generic.Unsigned](
 		return errors.ErrNoDataForKey(key)
 	}
 	if e.Type != data_type {
-		return errors.ErrTypeMismatch(key, data_type, e.Type)
+		return errors.ErrTypeMismatch(data_type, e.Type)
 	}
 	value, err := fromBinary(e.Data)
 	if err != nil {

@@ -18,7 +18,7 @@ func (s *CacheStore) GetString(key string) (string, error) {
 		return "", err
 	}
 	if e.Type != types.STRING {
-		return "", errors.ErrTypeMismatch(key, types.STRING, e.Type)
+		return "", errors.ErrTypeMismatch(types.STRING, e.Type)
 	}
 	return string(e.Data), nil
 }

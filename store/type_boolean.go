@@ -18,7 +18,7 @@ func (s *CacheStore) GetBool(key string) (bool, error) {
 		return false, err
 	}
 	if e.Type != types.BOOLEAN {
-		return false, errors.ErrTypeMismatch(key, types.BOOLEAN, e.Type)
+		return false, errors.ErrTypeMismatch(types.BOOLEAN, e.Type)
 	}
 	return len(e.Data) > 0 && e.Data[0] == 1, nil
 }

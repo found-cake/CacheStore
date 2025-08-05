@@ -19,7 +19,7 @@ func (s *CacheStore) GetTime(key string) (time.Time, error) {
 		return t, err
 	}
 	if e.Type != types.TIME {
-		return t, errors.ErrTypeMismatch(key, types.TIME, e.Type)
+		return t, errors.ErrTypeMismatch(types.TIME, e.Type)
 	}
 	if len(e.Data) == 0 {
 		return t, errors.ErrNoDataForKey(key)

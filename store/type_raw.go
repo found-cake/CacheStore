@@ -18,7 +18,7 @@ func (s *CacheStore) GetRaw(key string) ([]byte, error) {
 		return nil, err
 	}
 	if e.Type != types.RAW {
-		return nil, errors.ErrTypeMismatch(key, types.RAW, e.Type)
+		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
 	}
 
 	result := make([]byte, len(e.Data))
@@ -38,7 +38,7 @@ func (s *CacheStore) GetRawNoCopy(key string) ([]byte, error) {
 		return nil, err
 	}
 	if e.Type != types.RAW {
-		return nil, errors.ErrTypeMismatch(key, types.RAW, e.Type)
+		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
 	}
 
 	return e.Data, nil

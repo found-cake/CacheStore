@@ -32,7 +32,7 @@ func (s *CacheStore) getNum16(key string, expected types.DataType) (uint16, erro
 		return 0, err
 	}
 	if e.Type != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
+		return 0, errors.ErrTypeMismatch(expected, e.Type)
 	}
 	return utils.Binary2UInt16(e.Data)
 }
@@ -48,7 +48,7 @@ func (s *CacheStore) getNum32(key string, expected types.DataType) (uint32, erro
 		return 0, err
 	}
 	if e.Type != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
+		return 0, errors.ErrTypeMismatch(expected, e.Type)
 	}
 	return utils.Binary2UInt32(e.Data)
 }
@@ -64,7 +64,7 @@ func (s *CacheStore) getNum64(key string, expected types.DataType) (uint64, erro
 		return 0, err
 	}
 	if e.Type != expected {
-		return 0, errors.ErrTypeMismatch(key, expected, e.Type)
+		return 0, errors.ErrTypeMismatch(expected, e.Type)
 	}
 	return utils.Binary2UInt64(e.Data)
 }
@@ -92,7 +92,7 @@ func incrNumber[T generic.Numberic](
 		return nil
 	}
 	if e.Type != data_type {
-		return errors.ErrTypeMismatch(key, data_type, e.Type)
+		return errors.ErrTypeMismatch(data_type, e.Type)
 	}
 	value, err := fromBinary(e.Data)
 	if err != nil {
