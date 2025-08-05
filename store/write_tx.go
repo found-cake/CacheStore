@@ -1,11 +1,8 @@
 package store
 
 import (
-	"time"
-
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type WriteTransactionFunc func(tx *WriteTransaction) error
@@ -87,19 +84,19 @@ func (tx *WriteTransaction) commit() error {
 	return nil
 }
 
-func (tx *WriteTransaction) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {
+func (tx *WriteTransaction) Set(key string, e entry.Entry) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	if value == nil {
+	if e.Data == nil {
 		return errors.ErrValueNil
 	}
 
-	if expiry <= 0 {
-		tx.pendingPersistent[key] = newEntry(dataType, value, 0)
+	if e.Expiry <= 0 {
+		tx.pendingPersistent[key] = &e
 		tx.pendingTemporary[key] = nil
 	} else {
-		tx.pendingTemporary[key] = newEntry(dataType, value, expiry)
+		tx.pendingTemporary[key] = &e
 		tx.pendingPersistent[key] = nil
 	}
 
@@ -115,9 +112,4 @@ func (tx *WriteTransaction) Delete(key string) error {
 	tx.pendingTemporary[key] = nil
 
 	return nil
-}
-
-func newEntry(dataType types.DataType, data []byte, exp time.Duration) *entry.Entry {
-	e := entry.NewEntry(dataType, data, exp)
-	return &e
 }

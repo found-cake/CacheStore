@@ -3,8 +3,8 @@ package store
 import (
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type LockReadTransaction struct {
@@ -26,38 +26,26 @@ func (s *CacheStore) lockReadTx(fn ReadTransactionFunc) error {
 	return fn(tx)
 }
 
-func (tx *LockReadTransaction) Get(key string) (types.DataType, []byte, error) {
-	t, data, err := tx.GetNoCopy(key)
-	if err == nil {
-		result := make([]byte, len(data))
-		copy(result, data)
-		return t, result, err
-	}
-	return t, data, err
-}
-
-// GetNoCopy retrieves a value without copying data (zero-copy read)
-// ⚠️ WARNING: Don't modify the returned value!
-func (tx *LockReadTransaction) GetNoCopy(key string) (types.DataType, []byte, error) {
+func (tx *LockReadTransaction) Get(key string) (*entry.Entry, error) {
 	if key == "" {
-		return types.UNKNOWN, nil, errors.ErrKeyEmpty
+		return nil, errors.ErrKeyEmpty
 	}
 
-	entry, ok := tx.parent.memorydbPersistent[key]
+	e, ok := tx.parent.memorydbPersistent[key]
 	if ok {
-		return entry.Type, entry.Data, nil
+		return &e, nil
 	}
 
-	entry, ok = tx.parent.memorydbTemporary[key]
+	e, ok = tx.parent.memorydbTemporary[key]
 	if ok {
-		if entry.IsExpired() {
-			return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
+		if e.IsExpired() {
+			return nil, errors.ErrNoDataForKey(key)
 		} else {
-			return entry.Type, entry.Data, nil
+			return &e, nil
 		}
 	}
 
-	return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
+	return nil, errors.ErrNoDataForKey(key)
 }
 
 func (tx *LockReadTransaction) Exists(keys ...string) int {

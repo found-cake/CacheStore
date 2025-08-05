@@ -3,15 +3,14 @@ package store
 import (
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type ReadTransactionFunc func(tx ReadTransaction) error
 
 type ReadTransaction interface {
-	Get(key string) (types.DataType, []byte, error)
-	GetNoCopy(key string) (types.DataType, []byte, error)
+	Get(key string) (*entry.Entry, error)
 	Exists(keys ...string) int
 	TTL(key string) time.Duration
 }

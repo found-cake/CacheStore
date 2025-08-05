@@ -5,7 +5,6 @@ import (
 
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type SnapshotReadTransaction struct {
@@ -56,32 +55,20 @@ func (s *CacheStore) snapshotReadTx(fn ReadTransactionFunc) error {
 	return fn(tx)
 }
 
-func (tx *SnapshotReadTransaction) Get(key string) (types.DataType, []byte, error) {
-	t, data, err := tx.GetNoCopy(key)
-	if err == nil {
-		result := make([]byte, len(data))
-		copy(result, data)
-		return t, result, err
-	}
-	return t, data, err
-}
-
-// GetNoCopy retrieves a value without copying data (zero-copy read)
-// ⚠️ WARNING: Don't modify the returned value!
-func (tx *SnapshotReadTransaction) GetNoCopy(key string) (types.DataType, []byte, error) {
+func (tx *SnapshotReadTransaction) Get(key string) (*entry.Entry, error) {
 	if key == "" {
-		return types.UNKNOWN, nil, errors.ErrKeyEmpty
+		return nil, errors.ErrKeyEmpty
 	}
 
-	entry, ok := tx.memorydb[key]
+	e, ok := tx.memorydb[key]
 	if !ok {
-		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
+		return nil, errors.ErrNoDataForKey(key)
 	}
-	if entry.IsExpired() {
-		return types.UNKNOWN, nil, errors.ErrNoDataForKey(key)
+	if e.IsExpired() {
+		return nil, errors.ErrNoDataForKey(key)
 	}
 
-	return entry.Type, entry.Data, nil
+	return &e, nil
 }
 
 func (tx *SnapshotReadTransaction) Exists(keys ...string) int {
