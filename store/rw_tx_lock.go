@@ -1,11 +1,8 @@
 package store
 
 import (
-	"time"
-
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type LockRWTransaction struct {
@@ -38,19 +35,19 @@ func (tx *LockRWTransaction) commit() error {
 	return nil
 }
 
-func (tx *LockRWTransaction) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {
+func (tx *LockRWTransaction) Set(key string, e entry.Entry) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	if value == nil {
+	if e.Data == nil {
 		return errors.ErrValueNil
 	}
 
-	if expiry <= 0 {
-		tx.parent.memorydbPersistent[key] = entry.NewEntry(dataType, value, 0)
+	if e.Expiry <= 0 {
+		tx.parent.memorydbPersistent[key] = e
 		delete(tx.parent.memorydbTemporary, key)
 	} else {
-		tx.parent.memorydbTemporary[key] = entry.NewEntry(dataType, value, expiry)
+		tx.parent.memorydbTemporary[key] = e
 		delete(tx.parent.memorydbPersistent, key)
 	}
 

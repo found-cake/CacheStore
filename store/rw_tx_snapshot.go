@@ -1,11 +1,8 @@
 package store
 
 import (
-	"time"
-
 	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
-	"github.com/found-cake/CacheStore/utils/types"
 )
 
 type SnapshotRWTransaction struct {
@@ -83,21 +80,18 @@ func (tx *SnapshotRWTransaction) commit() error {
 	return nil
 }
 
-func (tx *SnapshotRWTransaction) Set(key string, dataType types.DataType, value []byte, expiry time.Duration) error {
+func (tx *SnapshotRWTransaction) Set(key string, e entry.Entry) error {
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	if value == nil {
+	if e.Data == nil {
 		return errors.ErrValueNil
 	}
 
-	var e entry.Entry
-	if expiry <= 0 {
-		e = entry.NewEntry(dataType, value, 0)
+	if e.Expiry <= 0 {
 		tx.pendingPersistent[key] = &e
 		tx.pendingTemporary[key] = nil
 	} else {
-		e = entry.NewEntry(dataType, value, expiry)
 		tx.pendingTemporary[key] = &e
 		tx.pendingPersistent[key] = nil
 	}
