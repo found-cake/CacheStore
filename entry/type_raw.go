@@ -7,18 +7,15 @@ import (
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
-func (e *Entry) AsRaw(key string) ([]byte, error) {
+func (e *Entry) AsRaw() ([]byte, error) {
 	if e.Type != types.RAW {
 		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
 	}
 
-	result := make([]byte, len(e.Data))
-	copy(result, e.Data)
-
-	return result, nil
+	return e.CopyData(), nil
 }
 
-func (e *Entry) AsRawNoCopy(key string) ([]byte, error) {
+func (e *Entry) AsRawNoCopy() ([]byte, error) {
 	if e.Type != types.RAW {
 		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
 	}
