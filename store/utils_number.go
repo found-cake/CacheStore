@@ -83,33 +83,29 @@ func incrNumber[T generic.Numberic](
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	s.temporaryMux.Lock()
-	defer s.temporaryMux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		data := toBinary(delta)
-		s.unsafeSet(key, data_type, data, exp)
+	return s.RWTransaction(false, func(tx RWTransaction) error {
+		e, err := tx.Get(key)
+		if err != nil {
+			data := toBinary(delta)
+			tx.Set(key, entry.NewEntry(data_type, data, exp))
+			return nil
+		}
+		if e.Type != data_type {
+			return errors.ErrTypeMismatch(data_type, e.Type)
+		}
+		value, err := fromBinary(e.Data)
+		if err != nil {
+			return err
+		}
+		if checkOverFlow(value, delta) {
+			return errors.ErrValueOverflow(key, data_type, value, delta)
+		}
+		value += delta
+		data := toBinary(value)
+		if checkFloatSpesial != nil && checkFloatSpesial(value) {
+			return errors.ErrFloatSpecial
+		}
+		s.Set(key, data_type, data, exp)
 		return nil
-	}
-	if e.Type != data_type {
-		return errors.ErrTypeMismatch(data_type, e.Type)
-	}
-	value, err := fromBinary(e.Data)
-	if err != nil {
-		return err
-	}
-	if checkOverFlow(value, delta) {
-		return errors.ErrValueOverflow(key, data_type, value, delta)
-	}
-	value += delta
-	data := toBinary(value)
-	if checkFloatSpesial != nil && checkFloatSpesial(value) {
-		return errors.ErrFloatSpecial
-	}
-	if exp > 0 {
-		s.unsafeSet(key, data_type, data, exp)
-	} else {
-		s.setKeepExp(key, data_type, data, e.Expiry)
-	}
-	return nil
+	})
 }

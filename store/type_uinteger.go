@@ -3,6 +3,7 @@ package store
 import (
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/utils"
 	"github.com/found-cake/CacheStore/utils/generic"
@@ -97,28 +98,24 @@ func decrUnsigned[T generic.Unsigned](
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	s.temporaryMux.Lock()
-	defer s.temporaryMux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return errors.ErrNoDataForKey(key)
-	}
-	if e.Type != data_type {
-		return errors.ErrTypeMismatch(data_type, e.Type)
-	}
-	value, err := fromBinary(e.Data)
-	if err != nil {
-		return err
-	}
-	if checkUnderflow(value, delta) {
-		return errors.ErrUnsignedUnderflow(key, value, delta)
-	}
-	value -= delta
-	data := toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, data_type, data, exp)
-	} else {
-		s.setKeepExp(key, data_type, data, e.Expiry)
-	}
-	return nil
+	return s.RWTransaction(false, func(tx RWTransaction) error {
+		e, err := tx.Get(key)
+		if err != nil {
+			return errors.ErrNoDataForKey(key)
+		}
+		if e.Type != data_type {
+			return errors.ErrTypeMismatch(data_type, e.Type)
+		}
+		value, err := fromBinary(e.Data)
+		if err != nil {
+			return err
+		}
+		if checkUnderflow(value, delta) {
+			return errors.ErrUnsignedUnderflow(key, value, delta)
+		}
+		value -= delta
+		data := toBinary(value)
+		tx.Set(key, entry.NewEntry(data_type, data, exp))
+		return nil
+	})
 }
