@@ -8,7 +8,7 @@ import (
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
-func (e *Entry) AsFloat32(key string) (float32, error) {
+func (e *Entry) AsFloat32() (float32, error) {
 	if e.Type != types.FLOAT32 {
 		return 0, errors.ErrTypeMismatch(types.FLOAT32, e.Type)
 	}
@@ -19,7 +19,7 @@ func FromFloat32(value float32, exp time.Duration) Entry {
 	return NewEntry(types.FLOAT32, utils.Float32toBinary(value), exp)
 }
 
-func (e *Entry) AsFloat64(key string) (float64, error) {
+func (e *Entry) AsFloat64() (float64, error) {
 	if e.Type != types.FLOAT64 {
 		return 0, errors.ErrTypeMismatch(types.FLOAT64, e.Type)
 	}
