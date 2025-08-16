@@ -3,16 +3,20 @@ package store
 import (
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/utils"
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetInt16(key string) (int16, error) {
-	if v, err := s.getNum16(key, types.INT16); err != nil {
-		return 0, err
-	} else {
-		return int16(v), nil
-	}
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data int16, err error) {
+		data, err = e.AsInt16()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetInt16(key string, value int16, exp time.Duration) error {
@@ -30,11 +34,14 @@ func (s *CacheStore) IncrInt16(key string, delta int16, exp time.Duration) error
 }
 
 func (s *CacheStore) GetInt32(key string) (int32, error) {
-	if v, err := s.getNum32(key, types.INT32); err != nil {
-		return 0, err
-	} else {
-		return int32(v), nil
-	}
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data int32, err error) {
+		data, err = e.AsInt32()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetInt32(key string, value int32, exp time.Duration) error {
@@ -52,11 +59,14 @@ func (s *CacheStore) IncrInt32(key string, delta int32, exp time.Duration) error
 }
 
 func (s *CacheStore) GetInt64(key string) (int64, error) {
-	if v, err := s.getNum64(key, types.INT64); err != nil {
-		return 0, err
-	} else {
-		return int64(v), nil
-	}
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data int64, err error) {
+		data, err = e.AsInt64()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetInt64(key string, value int64, exp time.Duration) error {

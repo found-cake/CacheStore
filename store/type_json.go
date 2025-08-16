@@ -1,36 +1,30 @@
 package store
 
 import (
-	"encoding/json"
 	"time"
 
-	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetJSON(key string, target interface{}) error {
-	if key == "" {
-		return errors.ErrKeyEmpty
-	}
-	s.temporaryMux.RLock()
-	defer s.temporaryMux.RUnlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return err
-	}
-	if e.Type != types.JSON {
-		return errors.ErrTypeMismatch(types.JSON, e.Type)
-	}
-	if len(e.Data) == 0 {
-		return errors.ErrNoDataForKey(key)
-	}
-	return json.Unmarshal(e.Data, target)
+	_, _, err := get(s, key, func(e *entry.Entry) (types.DataType, struct{}, error) {
+		err := e.AsJSON(target)
+		if err != nil {
+			return types.UNKNOWN, struct{}{}, err
+		}
+
+		return e.Type, struct{}{}, nil
+	})
+	return err
 }
 
 func (s *CacheStore) SetJSON(key string, value interface{}, exp time.Duration) error {
-	if data, err := json.Marshal(value); err != nil {
-		return err
-	} else {
-		return s.Set(key, types.JSON, data, exp)
-	}
+	return s.WriteTransaction(func(tx *WriteTransaction) error {
+		if e, err := entry.FromJSON(value, exp); err == nil {
+			return tx.Set(key, e)
+		} else {
+			return err
+		}
+	})
 }

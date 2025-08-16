@@ -3,47 +3,34 @@ package store
 import (
 	"time"
 
-	"github.com/found-cake/CacheStore/errors"
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/utils/types"
 )
 
 func (s *CacheStore) GetRaw(key string) ([]byte, error) {
-	if key == "" {
-		return nil, errors.ErrKeyEmpty
-	}
-	s.temporaryMux.RLock()
-	defer s.temporaryMux.RUnlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return nil, err
-	}
-	if e.Type != types.RAW {
-		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
-	}
-
-	result := make([]byte, len(e.Data))
-	copy(result, e.Data)
-
-	return result, nil
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data []byte, err error) {
+		data, err = e.AsRaw()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) GetRawNoCopy(key string) ([]byte, error) {
-	if key == "" {
-		return nil, errors.ErrKeyEmpty
-	}
-	s.temporaryMux.RLock()
-	defer s.temporaryMux.RUnlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return nil, err
-	}
-	if e.Type != types.RAW {
-		return nil, errors.ErrTypeMismatch(types.RAW, e.Type)
-	}
-
-	return e.Data, nil
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data []byte, err error) {
+		data, err = e.AsRawNoCopy()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetRaw(key string, value []byte, exp time.Duration) error {
-	return s.Set(key, types.RAW, value, exp)
+	return s.WriteTransaction(func(tx *WriteTransaction) error {
+		return tx.Set(key, entry.FromRaw(value, exp))
+	})
 }
