@@ -3,6 +3,7 @@ package store
 import (
 	"time"
 
+	"github.com/found-cake/CacheStore/entry"
 	"github.com/found-cake/CacheStore/errors"
 	"github.com/found-cake/CacheStore/utils"
 	"github.com/found-cake/CacheStore/utils/generic"
@@ -10,7 +11,14 @@ import (
 )
 
 func (s *CacheStore) GetUInt16(key string) (uint16, error) {
-	return s.getNum16(key, types.UINT16)
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data uint16, err error) {
+		data, err = e.AsUInt16()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetUInt16(key string, value uint16, exp time.Duration) error {
@@ -37,7 +45,14 @@ func (s *CacheStore) DecrUInt16(key string, delta uint16, exp time.Duration) err
 }
 
 func (s *CacheStore) GetUInt32(key string) (uint32, error) {
-	return s.getNum32(key, types.UINT32)
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data uint32, err error) {
+		data, err = e.AsUInt32()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetUInt32(key string, value uint32, exp time.Duration) error {
@@ -64,7 +79,14 @@ func (s *CacheStore) DecrUInt32(key string, delta uint32, exp time.Duration) err
 }
 
 func (s *CacheStore) GetUInt64(key string) (uint64, error) {
-	return s.getNum64(key, types.UINT64)
+	_, data, err := get(s, key, func(e *entry.Entry) (t types.DataType, data uint64, err error) {
+		data, err = e.AsUInt64()
+		if err == nil {
+			t = e.Type
+		}
+		return
+	})
+	return data, err
 }
 
 func (s *CacheStore) SetUInt64(key string, value uint64, exp time.Duration) error {
@@ -97,28 +119,24 @@ func decrUnsigned[T generic.Unsigned](
 	if key == "" {
 		return errors.ErrKeyEmpty
 	}
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	e, err := s.unsafeGet(key)
-	if err != nil {
-		return errors.ErrNoDataForKey(key)
-	}
-	if e.Type != data_type {
-		return errors.ErrTypeMismatch(key, data_type, e.Type)
-	}
-	value, err := fromBinary(e.Data)
-	if err != nil {
-		return err
-	}
-	if checkUnderflow(value, delta) {
-		return errors.ErrUnsignedUnderflow(key, value, delta)
-	}
-	value -= delta
-	data := toBinary(value)
-	if exp > 0 {
-		s.unsafeSet(key, data_type, data, exp)
-	} else {
-		s.setKeepExp(key, data_type, data, e.Expiry)
-	}
-	return nil
+	return s.RWTransaction(false, func(tx RWTransaction) error {
+		e, err := tx.Get(key)
+		if err != nil {
+			return errors.ErrNoDataForKey(key)
+		}
+		if e.Type != data_type {
+			return errors.ErrTypeMismatch(data_type, e.Type)
+		}
+		value, err := fromBinary(e.Data)
+		if err != nil {
+			return err
+		}
+		if checkUnderflow(value, delta) {
+			return errors.ErrUnsignedUnderflow(key, value, delta)
+		}
+		value -= delta
+		data := toBinary(value)
+		tx.Set(key, entry.NewEntry(data_type, data, exp))
+		return nil
+	})
 }

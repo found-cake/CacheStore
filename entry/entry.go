@@ -12,11 +12,17 @@ type Entry struct {
 	Expiry int64
 }
 
-func (e Entry) IsExpired() bool {
+func (e *Entry) CopyData() []byte {
+	result := make([]byte, len(e.Data))
+	copy(result, e.Data)
+	return result
+}
+
+func (e *Entry) IsExpired() bool {
 	return e.IsExpiredWithUnixMilli(time.Now().UnixMilli())
 }
 
-func (e Entry) IsExpiredWithUnixMilli(now int64) bool {
+func (e *Entry) IsExpiredWithUnixMilli(now int64) bool {
 	return e.Expiry > 0 && e.Expiry <= now
 }
 

@@ -33,13 +33,13 @@ func TestCleanExpired(t *testing.T) {
 		t.Errorf("Exists() = %v, want 0 for expired key", count)
 	}
 
-	_, ok := store.memorydb[key]
+	_, ok := store.memorydbTemporary[key]
 	if !ok {
 		t.Error("Want it to exist because haven't called cleanExpired yet.")
 	}
 
 	store.cleanExpired()
-	_, ok = store.memorydb[key]
+	_, ok = store.memorydbTemporary[key]
 	if ok {
 		t.Error("should not exist because cleanExpired was called.")
 	}
@@ -74,7 +74,7 @@ func TestGarbageCollector(t *testing.T) {
 		case <-timeout:
 			t.Fatal("timeout: key still exists after expected GC interval")
 		case <-tick:
-			if _, ok := store.memorydb[key]; !ok {
+			if _, ok := store.memorydbTemporary[key]; !ok {
 				return
 			}
 		}
