@@ -11,19 +11,21 @@ import (
 
 func NewCacheStore(cfg config.Config) (*CacheStore, error) {
 	store := &CacheStore{
-		memorydbTemporary: make(map[string]entry.Entry),
-		done:              make(chan struct{}),
+		memorydbPersistent: make(map[string]entry.Entry),
+		memorydbTemporary:  make(map[string]entry.Entry),
+		done:               make(chan struct{}),
 	}
 	if cfg.DBSave {
 		sqlitedb, err := sqlite.NewSqliteStore(cfg.DBFileName)
 		if err != nil {
 			return nil, err
 		}
-		data, err := sqlitedb.LoadFromDB()
+		temp, persi, err := sqlitedb.LoadFromDB()
 		if err != nil {
 			return nil, err
 		}
-		store.memorydbTemporary = data
+		store.memorydbPersistent = persi
+		store.memorydbTemporary = temp
 		store.sqlitedb = sqlitedb
 		if cfg.SaveDirtyData {
 			if cfg.DirtyThresholdCount <= 0 {
