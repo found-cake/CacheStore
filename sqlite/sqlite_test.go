@@ -28,7 +28,7 @@ func TestNewSqliteStore_InvalidFileName(t *testing.T) {
 
 func TestNewSqliteStore_NoDBInit(t *testing.T) {
 	s := &SqliteStore{}
-	_, err := s.LoadFromDB()
+	_, _, err := s.LoadFromDB()
 	if err == nil {
 		t.Error("expected error for not initialized sql")
 	}
@@ -66,7 +66,7 @@ func TestSqliteStore_Save_ForceLock(t *testing.T) {
 	store.mux.Unlock()
 	<-unlocked
 
-	loaded, err := store.LoadFromDB()
+	loaded, _, err := store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestSqliteStore_SaveDirtyData(t *testing.T) {
 		t.Errorf("force lock Save failed: %v", err)
 	}
 
-	loaded, err := store.LoadFromDB()
+	loaded, _, err := store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestSqliteStore_SaveDirtyData(t *testing.T) {
 
 	store.SaveDirtyData(dirtyData, []string{"foo"})
 
-	loaded, err = store.LoadFromDB()
+	loaded, _, err = store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestSqliteStore_Load(t *testing.T) {
 	if err != nil {
 		t.Errorf("force lock Save failed: %v", err)
 	}
-	loaded, err := store.LoadFromDB()
+	loaded, _, err := store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestSqliteStore_Load_FilterExpired(t *testing.T) {
 		t.Errorf("force lock Save failed: %v", err)
 	}
 	time.Sleep(200 * time.Millisecond)
-	loaded, err := store.LoadFromDB()
+	loaded, _, err := store.LoadFromDB()
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}

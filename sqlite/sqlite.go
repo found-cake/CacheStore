@@ -52,18 +52,19 @@ func NewSqliteStore(filename string) (*SqliteStore, error) {
 	}, nil
 }
 
-func (s *SqliteStore) LoadFromDB() (map[string]entry.Entry, error) {
+func (s *SqliteStore) LoadFromDB() (map[string]entry.Entry, map[string]entry.Entry, error) {
 	if s.db == nil {
-		return nil, errors.ErrDBNotInit
+		return nil, nil, errors.ErrDBNotInit
 	}
 
 	rows, err := s.db.Query("SELECT key, data_type, data, expiry FROM cache_data")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
-	dbData := make(map[string]entry.Entry)
+	tempdb := make(map[string]entry.Entry)
+	persidb := make(map[string]entry.Entry)
 	now := time.Now().UnixMilli()
 	for rows.Next() {
 		var key string
@@ -76,18 +77,25 @@ func (s *SqliteStore) LoadFromDB() (map[string]entry.Entry, error) {
 			continue
 		}
 
+		if expiry == 0 {
+			persidb[key] = entry.Entry{
+				Type: dataType,
+				Data: data,
+			}
+		}
+
 		if expiry > 0 && expiry <= now {
 			continue
 		}
 
-		dbData[key] = entry.Entry{
+		tempdb[key] = entry.Entry{
 			Type:   dataType,
 			Data:   data,
 			Expiry: expiry,
 		}
 	}
 
-	return dbData, nil
+	return tempdb, persidb, nil
 }
 
 func (s *SqliteStore) SaveDirtyData(set_dirtys map[string]entry.Entry, delete_dirtys []string) error {
