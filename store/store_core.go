@@ -228,11 +228,13 @@ func (s *CacheStore) Keys() []string {
 }
 
 func (s *CacheStore) TTL(key string) time.Duration {
-	s.persistentMux.RLock()
-	if _, ok := s.memorydbPersistent[key]; ok {
-		return TTLNoExpiry
+	{
+		s.persistentMux.RLock()
+		defer s.persistentMux.RUnlock()
+		if _, ok := s.memorydbPersistent[key]; ok {
+			return TTLNoExpiry
+		}
 	}
-	s.persistentMux.RUnlock()
 
 	s.temporaryMux.RLock()
 	defer s.temporaryMux.RUnlock()
